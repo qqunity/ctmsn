@@ -8,6 +8,7 @@ import { GraphView } from "@/components/GraphView";
 import { StatusPanel } from "@/components/StatusPanel";
 import { EquationsPanel } from "@/components/EquationsPanel";
 import { DetailsPanel } from "@/components/DetailsPanel";
+import { NetworkEditorPanel } from "@/components/NetworkEditorPanel";
 
 export default function Page() {
   const [scenarios, setScenarios] = useState<ScenarioSpec[]>([]);
@@ -57,6 +58,12 @@ export default function Page() {
     setSelected(eq);
   }
 
+  function handleGraphUpdate(newGraph: any) {
+    if (data) {
+      setData({ ...data, graph: newGraph });
+    }
+  }
+
   return (
     <div className="flex h-screen flex-col">
       <ScenarioBar
@@ -80,6 +87,13 @@ export default function Page() {
         <div className="w-[460px] shrink-0 overflow-auto border-l bg-white p-4">
           <div className="space-y-4">
             <StatusPanel data={data} />
+            {sessionId && (
+              <NetworkEditorPanel
+                sessionId={sessionId}
+                graph={data?.graph ?? null}
+                onUpdate={handleGraphUpdate}
+              />
+            )}
             <EquationsPanel eqs={data?.graph?.equations ?? []} onPick={pickEq} />
             <DetailsPanel selected={selected} />
           </div>

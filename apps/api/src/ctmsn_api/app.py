@@ -9,6 +9,8 @@ from ctmsn_api.registry import init_registry, list_specs, get as get_spec
 from ctmsn_api.sessions import get_session, put_session, SessionState
 from ctmsn_api.serialize import serialize
 from ctmsn_api.ops import run_ops
+from ctmsn.core.concept import Concept
+from ctmsn.core.predicate import Predicate
 
 app = FastAPI(title="CTnSS API")
 
@@ -73,3 +75,58 @@ def run(req: RunReq):
         "graph": serialize(st.net),
         **ops,
     }
+
+class AddConceptReq(BaseModel):
+    session_id: str
+    id: str
+    label: str
+    tags: list[str] = []
+
+@app.post("/api/session/add_concept")
+def add_concept(req: AddConceptReq):
+    st = get_session(req.session_id)
+    if not st:
+        return {"error": "unknown session"}
+    
+    try:
+        concept = Concept(id=req.id, label=req.label, tags=frozenset(req.tags))
+        st.net.add_concept(concept)
+        return {"ok": True, "graph": serialize(st.net)}
+    except ValueError as e:
+        return {"error": str(e)}
+
+class AddPredicateReq(BaseModel):
+    session_id: str
+    name: str
+    arity: int
+
+@app.post("/api/session/add_predicate")
+def add_predicate(req: AddPredicateReq):
+    st = get_session(req.session_id)
+    if not st:
+        return {"error": "unknown session"}
+    
+    try:
+        predicate = Predicate(name=req.name, arity=req.arity)
+        st.net.add_predicate(predicate)
+        return {"ok": True, "graph": serialize(st.net)}
+    except ValueError as e:
+        return {"error": str(e)}
+
+class AddFactReq(BaseModel):
+    session_id: str
+    predicate: str
+    args: list[str]
+
+@app.post("/api/session/add_fact")
+def add_fact(req: AddFactReq):
+    st = get_session(req.session_id)
+    if not st:
+        return {"error": "unknown session"}
+    
+    try:
+        args = tuple(st.net.concepts[cid] for cid in req.args)
+        st.net.assert_fact(req.predicate, args)
+        return {"ok": True, "graph": serialize(st.net)}
+    except (KeyError, ValueError) as e:
+        return {"error": str(e)}

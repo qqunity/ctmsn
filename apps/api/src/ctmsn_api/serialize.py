@@ -5,6 +5,10 @@ def serialize(net) -> dict[str, Any]:
     nodes = []
     for cid, c in net.concepts.items():
         nodes.append({"id": cid, "label": getattr(c, "title", None) or getattr(c, "name", None) or cid})
+    
+    predicates = []
+    for pname, pred in net.predicates.items():
+        predicates.append({"name": pname, "arity": pred.arity})
 
     edges = []
     def add(pred: str, kind: str):
@@ -38,6 +42,12 @@ def serialize(net) -> dict[str, Any]:
     add("derived_edge", "derived")
     add_binary("married", "relation", "married")
     add_binary("has_name", "relation", "has_name")
+    
+    for pname, pred in net.predicates.items():
+        if pname in ["edge", "derived_edge", "married", "has_name", "comp", "comp_expl", "comp2", "comp2_expl", "compN", "compN_expl"]:
+            continue
+        if pred.arity == 2:
+            add_binary(pname, "relation", pname)
 
     equations = []
     if "comp2" in net.predicates:
@@ -59,4 +69,4 @@ def serialize(net) -> dict[str, Any]:
             chain, result, trace = st.args
             traces["compN"].append({"chain":str(chain),"result":str(result),"trace":str(trace)})
 
-    return {"nodes": nodes, "edges": edges, "equations": equations, "traces": traces}
+    return {"nodes": nodes, "edges": edges, "equations": equations, "traces": traces, "predicates": predicates}
