@@ -1,6 +1,6 @@
 export type ScenarioSpec = { name: string; modes: string[] };
 
-export type GraphNode = { id: string; label: string };
+export type GraphNode = { id: string; label: string; tags?: string[] };
 export type GraphEdge = { id: string; label: string; source: string; target: string; kind: "edge" | "derived" };
 
 export type Equation =

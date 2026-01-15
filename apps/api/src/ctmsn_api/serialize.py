@@ -4,7 +4,11 @@ from typing import Any
 def serialize(net) -> dict[str, Any]:
     nodes = []
     for cid, c in net.concepts.items():
-        nodes.append({"id": cid, "label": getattr(c, "title", None) or getattr(c, "name", None) or cid})
+        nodes.append({
+            "id": cid, 
+            "label": getattr(c, "title", None) or getattr(c, "name", None) or cid,
+            "tags": list(c.tags) if hasattr(c, 'tags') else []
+        })
     
     predicates = []
     for pname, pred in net.predicates.items():
@@ -16,11 +20,13 @@ def serialize(net) -> dict[str, Any]:
             return
         for st in net.facts(pred):
             label, src, dst = st.args
+            src_id = src.id if hasattr(src, 'id') else str(src)
+            dst_id = dst.id if hasattr(dst, 'id') else str(dst)
             edges.append({
-                "id": f"{pred}:{label}:{src.id}->{dst.id}",
+                "id": f"{pred}:{label}:{src_id}->{dst_id}",
                 "label": str(label),
-                "source": src.id,
-                "target": dst.id,
+                "source": src_id,
+                "target": dst_id,
                 "kind": kind,
             })
 
@@ -30,11 +36,13 @@ def serialize(net) -> dict[str, Any]:
         for st in net.facts(pred):
             src, dst = st.args
             edge_label = label or pred
+            src_id = src.id if hasattr(src, 'id') else str(src)
+            dst_id = dst.id if hasattr(dst, 'id') else str(dst)
             edges.append({
-                "id": f"{pred}:{src.id}->{dst.id}",
+                "id": f"{pred}:{src_id}->{dst_id}",
                 "label": edge_label,
-                "source": src.id,
-                "target": dst.id,
+                "source": src_id,
+                "target": dst_id,
                 "kind": kind,
             })
 
@@ -58,6 +66,9 @@ def serialize(net) -> dict[str, Any]:
         for st in net.facts("compN"):
             chain, result = st.args
             equations.append({"kind":"compN","chain":str(chain),"result":str(result)})
+
+    node_ids = {n["id"] for n in nodes}
+    edges = [e for e in edges if e["source"] in node_ids and e["target"] in node_ids]
 
     traces = {"comp2": [], "compN": []}
     if "comp2_expl" in net.predicates:

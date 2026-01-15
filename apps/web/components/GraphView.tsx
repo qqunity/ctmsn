@@ -24,7 +24,7 @@ export function GraphView({
       const elements = !graph
         ? []
         : [
-            ...graph.nodes.map((n) => ({ data: { id: n.id, label: n.label } })),
+            ...graph.nodes.map((n) => ({ data: { id: n.id, label: n.label, tags: n.tags || [] } })),
             ...graph.edges.map((e) => ({
               data: { id: e.id, source: e.source, target: e.target, label: e.label, kind: e.kind },
             })),
