@@ -686,6 +686,47 @@ Explain:
 
 **Подробности:** [scenarios/fishing/README.md](src/ctmsn/scenarios/fishing/README.md)
 
+### Spawn (Нерест рыб)
+
+Моделирование процесса нереста рыб с изменением ролей через стадии развития.
+
+**Запуск:**
+```bash
+python src/ctmsn/examples/spawn_demo.py
+```
+
+**Что демонстрирует:**
+- Процесс изменения ролей рыб (spawner/milter) через стадии A → B → C
+- Поведенческие операторы (push, rethink)
+- Протяжку стрелок по времени (f, e)
+- Композиции на разных стадиях развития
+- Многошаговые равенства с трассировкой
+
+**Пример вывода:**
+```
+=== SPAWN (4.15) canonical ===
+Derivation: {'derived_edges_added': 5, 'comp2_added': 18, ...}
+Check ok: True
+forces(phi): true
+force(phi): true | Already forced
+
+Explain:
+  - spawner = not_eat ∘ fish (через Fish)
+  - milter = eat ∘ fish (через Fish)
+  - spawner_f = push ∘ milter_f (через Fish_plus)
+  - milter_f = rethink ∘ spawner_f (через Fish_minus)
+```
+
+**Ключевые равенства:**
+- `spawner = not-eat ∘ fish` — самка (не ест икру)
+- `milter = eat ∘ fish` — самец (ест икру)
+- `push ∘ milter_f = spawner_f` — отталкивание на стадии B
+- `rethink ∘ spawner_f = milter_f` — передумывание на стадии B
+- `rethink ∘ push ∘ milter_f = milter_f` — возврат в исходное состояние
+- `(rethink ∘ spawner_f)_e = (milter_f)_e` — сохранение на стадии C
+
+**Подробности:** [scenarios/spawn/README.md](src/ctmsn/scenarios/spawn/README.md)
+
 ### Создание собственных сценариев
 
 См. подробное руководство: [scenarios/README.md](src/ctmsn/scenarios/README.md)
@@ -697,9 +738,11 @@ Explain:
 - **[FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md)** — реализация задачи о быстром Смите
 - **[TIME_PROCESS_IMPLEMENTATION.md](TIME_PROCESS_IMPLEMENTATION.md)** — реализация процесса во времени
 - **[FISHING_IMPLEMENTATION.md](FISHING_IMPLEMENTATION.md)** — реализация задачи о рыбалке
+- **[SPAWN_IMPLEMENTATION.md](SPAWN_IMPLEMENTATION.md)** — реализация задачи о нересте рыб
 - **[scenarios/README.md](src/ctmsn/scenarios/README.md)** — руководство по созданию сценариев
 - **[scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md)** — процесс во времени
 - **[scenarios/fishing/README.md](src/ctmsn/scenarios/fishing/README.md)** — задача о рыбалке
+- **[scenarios/spawn/README.md](src/ctmsn/scenarios/spawn/README.md)** — нерест рыб
 - **[.cursorrules](.cursorrules)** — правила кодирования проекта
 
 ## Текущие ограничения

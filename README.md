@@ -160,12 +160,17 @@ force result: true Already forced
    - Длинные 4-шаговые равенства
    - Материализация стрелок
 
-5. 📂 **Исходный код**
+5. 🐟 **[SPAWN_IMPLEMENTATION.md](SPAWN_IMPLEMENTATION.md)**
+   - Процесс нереста рыб
+   - Изменение ролей через стадии развития
+   - Протяжка композиций по времени
+
+6. 📂 **Исходный код**
    - `src/ctmsn/forcing/engine.py` — ядро форсинга
    - `src/ctmsn/logic/evaluator.py` — вычисление истинности
    - `src/ctmsn/logic/tribool.py` — трёхзначная логика
 
-6. 📊 **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**
+7. 📊 **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**
    - Обзор документации
    - Покрытие тем
    - Направления развития
@@ -296,6 +301,36 @@ Explain:
 📖 **[Подробнее о Fishing](FISHING_IMPLEMENTATION.md)**  
 📖 **[Описание задачи](src/ctmsn/scenarios/fishing/README.md)**
 
+### Spawn (Нерест рыб)
+
+Задача о нересте рыб (4.15) — моделирование изменения ролей через стадии развития:
+- Процесс изменения ролей рыб (spawner/milter) через стадии A → B → C
+- Поведенческие операторы (push, rethink)
+- Протяжка стрелок по времени через эволвенты f и e
+- Многошаговые композиции на разных стадиях
+
+```bash
+python3 src/ctmsn/examples/spawn_demo.py
+```
+
+**Ожидаемый вывод:**
+```
+=== SPAWN (4.15) canonical ===
+Derivation: {'derived_edges_added': 5, 'comp2_added': 18, ...}
+Check ok: True
+forces(phi): true
+force(phi): true | Already forced
+
+Explain:
+  - spawner = not_eat ∘ fish (через Fish)
+  - milter = eat ∘ fish (через Fish)
+  - spawner_f = push ∘ milter_f (через Fish_plus)
+  - milter_f = rethink ∘ spawner_f (через Fish_minus)
+```
+
+📖 **[Подробнее о Spawn](SPAWN_IMPLEMENTATION.md)**  
+📖 **[Описание задачи](src/ctmsn/scenarios/spawn/README.md)**
+
 ---
 
 ## Архитектура
@@ -351,7 +386,9 @@ src/ctmsn/
 | **Форсинг: forces()** | Проверка форсирования | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md#2-forces--проверка-форсирования) |
 | **Форсинг: force()** | Расширение контекста (skeleton) | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md#3-force--расширение-контекста) |
 | **Сценарий Fast Smith** | Полная реализация | [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md) |
-| **Сценарий Time Process** | Процесс во времени | [scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md) |
+| **Сценарий Time Process** | Процесс во времени | [TIME_PROCESS_IMPLEMENTATION.md](TIME_PROCESS_IMPLEMENTATION.md) |
+| **Сценарий Fishing** | Задача о рыбалке | [FISHING_IMPLEMENTATION.md](FISHING_IMPLEMENTATION.md) |
+| **Сценарий Spawn** | Нерест рыб | [SPAWN_IMPLEMENTATION.md](SPAWN_IMPLEMENTATION.md) |
 
 ### В планах
 
