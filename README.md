@@ -150,12 +150,17 @@ force result: true Already forced
    - Композиции морфизмов
    - Формальная модель
 
-3. 📂 **Исходный код**
+3. ⏱️ **[TIME_PROCESS_IMPLEMENTATION.md](TIME_PROCESS_IMPLEMENTATION.md)**
+   - Процессы во времени
+   - Механизм вывода контекстных стрелок
+   - Композиционные равенства
+
+4. 📂 **Исходный код**
    - `src/ctmsn/forcing/engine.py` — ядро форсинга
    - `src/ctmsn/logic/evaluator.py` — вычисление истинности
    - `src/ctmsn/logic/tribool.py` — трёхзначная логика
 
-4. 📊 **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**
+5. 📊 **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**
    - Обзор документации
    - Покрытие тем
    - Направления развития
@@ -171,8 +176,10 @@ force result: true Already forced
 | **[USAGE.md](USAGE.md)** | Подробное руководство пользователя | Новички, Разработчики |
 | **[FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md)** | Архитектура форсинг-движка | Разработчики, Исследователи |
 | **[FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md)** | Реализация задачи о быстром Смите | Все |
+| **[TIME_PROCESS_IMPLEMENTATION.md](TIME_PROCESS_IMPLEMENTATION.md)** | Реализация процесса во времени | Все |
 | **[scenarios/README.md](src/ctmsn/scenarios/README.md)** | Руководство по созданию сценариев | Разработчики |
 | **[scenarios/fast_smith/README.md](src/ctmsn/scenarios/fast_smith/README.md)** | Описание Fast Smith | Все |
+| **[scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md)** | Процесс во времени | Все |
 | **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)** | Сводка по документации | Исследователи |
 | **[RELEASE_NOTES.md](RELEASE_NOTES.md)** | История изменений | Все |
 | **[NAVIGATION.md](NAVIGATION.md)** | Карта навигации документации | Все |
@@ -230,6 +237,30 @@ force(phi): true | Already forced
 📖 **[Подробнее о Fast Smith](FAST_SMITH_IMPLEMENTATION.md)**  
 📖 **[Описание задачи](src/ctmsn/scenarios/fast_smith/README.md)**
 
+### Time Process
+
+Сценарий моделирования процессов во времени через композицию морфизмов:
+- Трёхуровневая формализация (диаграмма → равенства → вычисление)
+- Механизм вывода контекстных стрелок (before/after + sun)
+- Композиционные равенства с трассировкой
+- Режимы: sun (солнечный процесс) и prereq (prerequisite/effect)
+
+```bash
+python3 src/ctmsn/examples/time_process_demo.py
+```
+
+**Ожидаемый вывод:**
+```
+=== TIME PROCESS: sun ===
+Derivation stats: {'derived_edges_added': 4, 'comp_added': ..., ...}
+forces(phi): true
+Explain:
+  - sunset = below ∘ sun_before (через узел T)
+  - sunrise = above ∘ sun_after (через узел T)
+```
+
+📖 **[Описание сценария](src/ctmsn/scenarios/time_process/README.md)**
+
 ---
 
 ## Архитектура
@@ -260,7 +291,8 @@ src/ctmsn/
 │   └── strategy.py      # Стратегии поиска (заглушка)
 │
 ├── scenarios/      # Готовые сценарии
-│   └── fast_smith/      # Задача о быстром Смите
+│   ├── fast_smith/      # Задача о быстром Смите
+│   └── time_process/    # Процесс во времени
 │
 ├── examples/       # Примеры использования
 └── io/             # Сериализация (заглушка)
@@ -284,6 +316,7 @@ src/ctmsn/
 | **Форсинг: forces()** | Проверка форсирования | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md#2-forces--проверка-форсирования) |
 | **Форсинг: force()** | Расширение контекста (skeleton) | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md#3-force--расширение-контекста) |
 | **Сценарий Fast Smith** | Полная реализация | [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md) |
+| **Сценарий Time Process** | Процесс во времени | [scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md) |
 
 ### В планах
 

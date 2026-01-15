@@ -621,6 +621,33 @@ python src/ctmsn/examples/fast_smith_demo.py
 
 **Подробности:** [scenarios/fast_smith/README.md](src/ctmsn/scenarios/fast_smith/README.md)
 
+### Time Process (Процесс во времени)
+
+Сценарий моделирования процессов во времени через композицию морфизмов.
+
+**Запуск:**
+```bash
+python src/ctmsn/examples/time_process_demo.py
+```
+
+**Что демонстрирует:**
+- Трёхуровневую формализацию (диаграмма → равенства → вычисление)
+- Механизм вывода контекстных стрелок из before/after + sun
+- Композиционные равенства с трассировкой (comp_expl)
+- Режимы: sun (солнечный процесс) и prereq (prerequisite/effect)
+
+**Пример вывода:**
+```
+=== TIME PROCESS: sun ===
+Derivation stats: {'derived_edges_added': 4, 'comp_added': 8, 'comp_expl_added': 8}
+forces(phi): true
+Explain:
+  - sunset = below ∘ sun_before (через узел T)
+  - sunrise = above ∘ sun_after (через узел T)
+```
+
+**Подробности:** [scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md)
+
 ### Создание собственных сценариев
 
 См. подробное руководство: [scenarios/README.md](src/ctmsn/scenarios/README.md)
@@ -631,6 +658,7 @@ python src/ctmsn/examples/fast_smith_demo.py
 - **[FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md)** — архитектура форсинг-движка
 - **[FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md)** — реализация задачи о быстром Смите
 - **[scenarios/README.md](src/ctmsn/scenarios/README.md)** — руководство по созданию сценариев
+- **[scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md)** — процесс во времени
 - **[.cursorrules](.cursorrules)** — правила кодирования проекта
 
 ## Текущие ограничения
