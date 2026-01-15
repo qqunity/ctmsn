@@ -16,13 +16,11 @@ def build_network(mode: str = "sun") -> SemanticNetwork:
     A = Concept("A", "A / {now1}")
     B = Concept("B", "B (future)")
 
-    horizon = Concept("horizon1", "{horizon1}")
-
     Tm = Concept("T_minus", "T−")
     T = Concept("T", "T")
     Tp = Concept("T_plus", "T+")
 
-    for c in (Bp, A, B, horizon, Tm, T, Tp):
+    for c in (Bp, A, B, Tm, T, Tp):
         net.add_concept(c)
 
     net.add_predicate(Predicate("edge", 3, roles=("label", "from", "to")))
@@ -31,6 +29,9 @@ def build_network(mode: str = "sun") -> SemanticNetwork:
     net.add_predicate(Predicate("comp_expl", 4, roles=("left", "right", "result", "mid")))
 
     if mode == "sun":
+        horizon = Concept("horizon1", "{horizon1}")
+        net.add_concept(horizon)
+
         net.assert_fact("edge", ("before", Bp, A))
         net.assert_fact("edge", ("after", B, A))
 

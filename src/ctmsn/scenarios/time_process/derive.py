@@ -43,7 +43,6 @@ def derive_context_edges(net: SemanticNetwork, mode: str) -> int:
 
     Bp, A, B = C("B_prime"), C("A"), C("B")
     T = C("T")
-    horizon = C("horizon1")
 
     base = [(l, s, d) for (l, s, d, k) in _all_edges(net) if k == "edge"]
 
@@ -64,6 +63,8 @@ def derive_context_edges(net: SemanticNetwork, mode: str) -> int:
             added += 1
 
     if mode == "sun":
+        horizon = C("horizon1")
+
         if any(l == "before" and s.id == Bp.id and d.id == A.id for l, s, d in base) and \
            any(l == "sun" and s.id == A.id and d.id == T.id for l, s, d in base):
             add_derived("sun_before", Bp, T)

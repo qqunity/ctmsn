@@ -1,0 +1,4 @@
+api/src/ctmsn_api/__pycache__/
+web/node_modules/
+web/.next/
+web/.env*.local
