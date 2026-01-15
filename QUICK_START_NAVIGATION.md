@@ -8,8 +8,7 @@
 
 ## ⚡ Быстрый выбор пути
 
-### 1️⃣ Я новичок — хочу научиться основам
-**Время:** 1-2 часа
+### 1️⃣ Новичок — изучение основ
 
 ```
 START → README.md → USAGE.md → examples/ → практика
@@ -19,8 +18,7 @@ START → README.md → USAGE.md → examples/ → практика
 
 ---
 
-### 2️⃣ Я разработчик — хочу создавать сценарии
-**Время:** 3-4 часа
+### 2️⃣ Разработчик — создание сценариев
 
 ```
 START → USAGE.md → FORCING_IMPLEMENTATION.md → FAST_SMITH_IMPLEMENTATION.md → создать свой
@@ -30,8 +28,7 @@ START → USAGE.md → FORCING_IMPLEMENTATION.md → FAST_SMITH_IMPLEMENTATION.m
 
 ---
 
-### 3️⃣ Я исследователь — хочу понять архитектуру
-**Время:** 4-6 часов
+### 3️⃣ Исследователь — архитектура
 
 ```
 START → FORCING_IMPLEMENTATION.md → исходный код → DOCUMENTATION_SUMMARY.md
@@ -47,40 +44,38 @@ START → FORCING_IMPLEMENTATION.md → исходный код → DOCUMENTATIO
 
 ---
 
-## 📚 Все документы (9 файлов)
+## 📚 Все документы
 
-| # | Документ | Описание | Время |
-|---|----------|----------|-------|
-| 1 | [README.md](README.md) | 🏠 Главная (НАЧНИТЕ ЗДЕСЬ) | 5-10 мин |
-| 2 | [NAVIGATION.md](NAVIGATION.md) | 🗺️ Карта навигации | 5 мин |
-| 3 | [USAGE.md](USAGE.md) | 📘 Руководство пользователя | 30-60 мин |
-| 4 | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md) | ⚙️ Архитектура форсинга | 60-180 мин |
-| 5 | [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md) | 🎯 Пример реализации | 15-60 мин |
-| 6 | [scenarios/README.md](src/ctmsn/scenarios/README.md) | 📚 Создание сценариев | 20-30 мин |
-| 7 | [scenarios/fast_smith/README.md](src/ctmsn/scenarios/fast_smith/README.md) | 🎓 Fast Smith задача | 10-15 мин |
-| 8 | [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md) | 📊 Сводка документации | 20-30 мин |
-| 9 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | 📋 История изменений | 5-10 мин |
-
-**Итого:** 3,760 строк, 133 KB документации
+| # | Документ | Описание |
+|---|----------|----------|
+| 1 | [README.md](README.md) | 🏠 Главная (НАЧНИТЕ ЗДЕСЬ) |
+| 2 | [NAVIGATION.md](NAVIGATION.md) | 🗺️ Карта навигации |
+| 3 | [USAGE.md](USAGE.md) | 📘 Руководство пользователя |
+| 4 | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md) | ⚙️ Архитектура форсинга |
+| 5 | [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md) | 🎯 Пример реализации |
+| 6 | [scenarios/README.md](src/ctmsn/scenarios/README.md) | 📚 Создание сценариев |
+| 7 | [scenarios/fast_smith/README.md](src/ctmsn/scenarios/fast_smith/README.md) | 🎓 Fast Smith задача |
+| 8 | [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md) | 📊 Сводка документации |
+| 9 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | 📋 История изменений |
 
 ---
 
 ## 🎯 Что мне нужно?
 
 ### "Хочу быстро начать"
-→ [README.md](README.md#быстрый-старт) (5 мин)
+→ [README.md](README.md#быстрый-старт)
 
 ### "Хочу понять форсинг"
-→ [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md#ключевые-концепции) (30 мин)
+→ [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md#ключевые-концепции)
 
 ### "Хочу увидеть пример"
-→ [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md) (15 мин)
+→ [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md)
 
 ### "Хочу создать свой сценарий"
-→ [scenarios/README.md](src/ctmsn/scenarios/README.md#создание-нового-сценария) (20 мин)
+→ [scenarios/README.md](src/ctmsn/scenarios/README.md#создание-нового-сценария)
 
 ### "Хочу увидеть полную картину"
-→ [NAVIGATION.md](NAVIGATION.md) + [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md) (30 мин)
+→ [NAVIGATION.md](NAVIGATION.md) + [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)
 
 ---
 
@@ -110,8 +105,6 @@ python3 tests/test_fast_smith.py
 ---
 
 <div align="center">
-
-**Приятного изучения! 📚✨**
 
 **[🏠 Перейти на главную](README.md)** | **[🗺️ Открыть карту](NAVIGATION.md)**
 
