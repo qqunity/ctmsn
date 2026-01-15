@@ -155,12 +155,17 @@ force result: true Already forced
    - Механизм вывода контекстных стрелок
    - Композиционные равенства
 
-4. 📂 **Исходный код**
+4. 🎣 **[FISHING_IMPLEMENTATION.md](FISHING_IMPLEMENTATION.md)**
+   - Каноничный вывод композиций
+   - Длинные 4-шаговые равенства
+   - Материализация стрелок
+
+5. 📂 **Исходный код**
    - `src/ctmsn/forcing/engine.py` — ядро форсинга
    - `src/ctmsn/logic/evaluator.py` — вычисление истинности
    - `src/ctmsn/logic/tribool.py` — трёхзначная логика
 
-5. 📊 **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**
+6. 📊 **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)**
    - Обзор документации
    - Покрытие тем
    - Направления развития
@@ -259,7 +264,37 @@ Explain:
   - sunrise = above ∘ sun_after (через узел T)
 ```
 
-📖 **[Описание сценария](src/ctmsn/scenarios/time_process/README.md)**
+📖 **[Подробнее о Time Process](TIME_PROCESS_IMPLEMENTATION.md)**  
+📖 **[Описание задачи](src/ctmsn/scenarios/time_process/README.md)**
+
+### Fishing
+
+Задача о рыбалке — каноничный пример полного вывода композиций:
+- Вывод 2-шаговых композиций через поиск путей
+- Длинная 4-шаговая композиция с trace
+- Материализация derived_edge для форсинга
+- Объяснения с промежуточными узлами
+
+```bash
+python3 src/ctmsn/examples/fishing_demo.py
+```
+
+**Ожидаемый вывод:**
+```
+Derivation: {'comp2_added': 18, 'compN_long_ok': True}
+Check ok: True
+forces(phi): true
+force(phi): true | Already forced
+
+Explain:
+  - s = g_minus ∘ h (через F)
+  - j = g_plus ∘ h (через F)
+  - j = catch ∘ s (через F_minus)
+  - catch_sf = hook+∘fake+∘eat∘sf (trace: ...)
+```
+
+📖 **[Подробнее о Fishing](FISHING_IMPLEMENTATION.md)**  
+📖 **[Описание задачи](src/ctmsn/scenarios/fishing/README.md)**
 
 ---
 

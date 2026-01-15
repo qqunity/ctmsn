@@ -648,6 +648,44 @@ Explain:
 
 **Подробности:** [scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md)
 
+### Fishing (Задача о рыбалке)
+
+Каноничная реализация вывода композиций через поиск путей в графе.
+
+**Запуск:**
+```bash
+python src/ctmsn/examples/fishing_demo.py
+```
+
+**Что демонстрирует:**
+- Вывод 2-шаговых композиций (comp2) через анализ путей
+- Длинную 4-шаговую композицию (compN) с трассировкой
+- Материализацию композиций как derived_edge
+- Объяснения с промежуточными узлами
+
+**Пример вывода:**
+```
+=== FISHING (4.14) canonical ===
+Derivation: {'comp2_added': 18, 'compN_long_ok': True}
+Check ok: True
+forces(phi): true
+force(phi): true | Already forced
+
+Explain:
+  - s = g_minus ∘ h (через F)
+  - j = g_plus ∘ h (через F)
+  - j = catch ∘ s (через F_minus)
+  - catch_sf = hook+∘fake+∘eat∘sf (trace: sf: ['Cf_minus']; eat: ['W']; ...)
+```
+
+**Ключевые равенства:**
+- `g_minus ∘ h = s` — свободная рыба
+- `g_plus ∘ h = j` — пойманная рыба
+- `catch ∘ s = j` — процесс ловли
+- `hook_plus ∘ fake_plus ∘ eat ∘ sf = catch_sf` — полная цепочка (наживка → улов)
+
+**Подробности:** [scenarios/fishing/README.md](src/ctmsn/scenarios/fishing/README.md)
+
 ### Создание собственных сценариев
 
 См. подробное руководство: [scenarios/README.md](src/ctmsn/scenarios/README.md)
@@ -657,8 +695,11 @@ Explain:
 - **[README.md](README.md)** — общий обзор проекта
 - **[FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md)** — архитектура форсинг-движка
 - **[FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md)** — реализация задачи о быстром Смите
+- **[TIME_PROCESS_IMPLEMENTATION.md](TIME_PROCESS_IMPLEMENTATION.md)** — реализация процесса во времени
+- **[FISHING_IMPLEMENTATION.md](FISHING_IMPLEMENTATION.md)** — реализация задачи о рыбалке
 - **[scenarios/README.md](src/ctmsn/scenarios/README.md)** — руководство по созданию сценариев
 - **[scenarios/time_process/README.md](src/ctmsn/scenarios/time_process/README.md)** — процесс во времени
+- **[scenarios/fishing/README.md](src/ctmsn/scenarios/fishing/README.md)** — задача о рыбалке
 - **[.cursorrules](.cursorrules)** — правила кодирования проекта
 
 ## Текущие ограничения
