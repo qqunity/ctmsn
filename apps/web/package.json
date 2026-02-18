@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "cytoscape": "^3.30.3",
+    "cytoscape-dagre": "^2.5.0",
     "js-cookie": "^3.0.5",
     "next": "^15.1.0",
     "react": "^19.0.0",

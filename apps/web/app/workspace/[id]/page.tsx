@@ -16,6 +16,8 @@ import { VariableEditorPanel } from "@/components/VariableEditorPanel";
 import { ContextEditorPanel } from "@/components/ContextEditorPanel";
 import { FormulaEditorPanel } from "@/components/FormulaEditorPanel";
 import { ForcingPanel } from "@/components/ForcingPanel";
+import { GraphLegend } from "@/components/GraphLegend";
+import { LayoutSelector } from "@/components/LayoutSelector";
 
 export default function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +43,8 @@ export default function WorkspacePage() {
   const [sharedFormulas, setSharedFormulas] = useState<FormulaInfo[]>([]);
   const [sharedContexts, setSharedContexts] = useState<NamedContextInfo[]>([]);
   const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ can_undo: false, can_redo: false, undo_count: 0, redo_count: 0 });
+  const [graphLayout, setGraphLayout] = useState("cose");
+  const [eqHighlights, setEqHighlights] = useState<ContextHighlights | null>(null);
   const graphRef = useRef<GraphViewHandle>(null);
 
   useEffect(() => {
@@ -102,6 +106,47 @@ export default function WorkspacePage() {
 
   function pickEq(eq: Equation) {
     setSelected(eq);
+
+    if (!data?.graph) {
+      setEqHighlights(null);
+      return;
+    }
+
+    const nodeIds = new Set<string>();
+    const edgeIds = new Set<string>();
+    const edges = data.graph.edges;
+
+    if (eq.kind === "comp2") {
+      // Find edges matching left, right, result labels
+      for (const e of edges) {
+        if (e.label === eq.left || e.label === eq.right || e.label === eq.result) {
+          edgeIds.add(e.id);
+          nodeIds.add(e.source);
+          nodeIds.add(e.target);
+        }
+      }
+      // Also look for mid-nodes from traces
+      if (data.graph.traces?.comp2) {
+        for (const t of data.graph.traces.comp2) {
+          if (t.result === eq.result && t.left === eq.left && t.right === eq.right) {
+            if (t.mid) nodeIds.add(t.mid);
+          }
+        }
+      }
+    } else {
+      // compN: split chain by ";" and find edges by each label
+      const labels = eq.chain.split(";").map((s: string) => s.trim());
+      labels.push(eq.result);
+      for (const e of edges) {
+        if (labels.includes(e.label)) {
+          edgeIds.add(e.id);
+          nodeIds.add(e.source);
+          nodeIds.add(e.target);
+        }
+      }
+    }
+
+    setEqHighlights({ nodes: Array.from(nodeIds), edges: Array.from(edgeIds) });
   }
 
   function handleGraphUpdate(newGraph: any) {
@@ -167,6 +212,7 @@ export default function WorkspacePage() {
       // but we can still set selected for details
     }
     setSelected(x);
+    setEqHighlights(null);
   }, [activeTermPickerId]);
 
   const handleFormulasChange = useCallback((formulas: FormulaInfo[]) => {
@@ -273,6 +319,7 @@ export default function WorkspacePage() {
           >
             &#x21AA;
           </button>
+          <LayoutSelector value={graphLayout} onChange={setGraphLayout} />
         </div>
         <div className="flex items-center gap-1 ml-2">
           <button
@@ -318,8 +365,16 @@ export default function WorkspacePage() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1">
-          <GraphView ref={graphRef} graph={data?.graph ?? null} onSelect={handleGraphSelect} highlights={highlights} />
+        <div className="flex-1 relative">
+          <GraphView
+            ref={graphRef}
+            graph={data?.graph ?? null}
+            onSelect={handleGraphSelect}
+            highlights={highlights}
+            layout={graphLayout}
+            equationHighlights={eqHighlights}
+          />
+          <GraphLegend />
         </div>
 
         <div className="w-[460px] shrink-0 overflow-auto border-l bg-white p-4">
