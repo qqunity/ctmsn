@@ -61,3 +61,4 @@ The system follows a consistent flow: **Network → Variables → Constraints �
 - **Absolute imports** for internal modules (e.g., `from ctmsn.core.concept import Concept`).
 - **Documentation language is Russian** (README, implementation docs, cursorrules). Code and identifiers are English.
 - Documentation style is formal/technical — no emotional expressions, no time estimates, no line-count statistics.
+- **After every code edit in `apps/web/` or `apps/api/`**, run the `webapp-testing` skill to verify the changes work correctly in the browser.

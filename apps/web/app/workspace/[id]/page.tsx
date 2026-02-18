@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { listScenarios, loadScenario, runScenario, renameWorkspace, undoNetwork, redoNetwork, getHistoryStatus } from "@/lib/api";
+import { listScenarios, loadScenario, runScenario, renameWorkspace, undoNetwork, redoNetwork, getHistoryStatus, exportWorkspace, importWorkspace } from "@/lib/api";
 import { LoadResponse, ScenarioSpec, Equation, ContextHighlights, FormulaInfo, NamedContextInfo, HistoryStatus } from "@/lib/types";
 import { ScenarioBar } from "@/components/ScenarioBar";
-import { GraphView } from "@/components/GraphView";
+import { GraphView, GraphViewHandle } from "@/components/GraphView";
 import { StatusPanel } from "@/components/StatusPanel";
 import { EquationsPanel } from "@/components/EquationsPanel";
 import { DetailsPanel } from "@/components/DetailsPanel";
@@ -41,6 +41,7 @@ export default function WorkspacePage() {
   const [sharedFormulas, setSharedFormulas] = useState<FormulaInfo[]>([]);
   const [sharedContexts, setSharedContexts] = useState<NamedContextInfo[]>([]);
   const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ can_undo: false, can_redo: false, undo_count: 0, redo_count: 0 });
+  const graphRef = useRef<GraphViewHandle>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
@@ -186,6 +187,42 @@ export default function WorkspacePage() {
     setEditingName(false);
   }
 
+  async function handleExportJson() {
+    if (!sessionId) return;
+    const data = await exportWorkspace(sessionId);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${wsName || "workspace"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportJson() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const result = await importWorkspace(data);
+      router.push(`/workspace/${result.id}`);
+    };
+    input.click();
+  }
+
+  function handleExportPng() {
+    const dataUrl = graphRef.current?.exportPng();
+    if (!dataUrl) return;
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${wsName || "workspace"}.png`;
+    a.click();
+  }
+
   if (authLoading || !user) return null;
 
   return (
@@ -237,6 +274,29 @@ export default function WorkspacePage() {
             &#x21AA;
           </button>
         </div>
+        <div className="flex items-center gap-1 ml-2">
+          <button
+            onClick={handleExportJson}
+            className="rounded px-2 py-1 text-xs hover:bg-gray-100"
+            title="Экспорт JSON"
+          >
+            &#x1F4E5; JSON
+          </button>
+          <button
+            onClick={handleImportJson}
+            className="rounded px-2 py-1 text-xs hover:bg-gray-100"
+            title="Импорт JSON"
+          >
+            &#x1F4E4; JSON
+          </button>
+          <button
+            onClick={handleExportPng}
+            className="rounded px-2 py-1 text-xs hover:bg-gray-100"
+            title="Скриншот графа (PNG)"
+          >
+            &#x1F4F7; PNG
+          </button>
+        </div>
         <div className="flex-1" />
         <span className="text-sm text-gray-500">{user.username}</span>
         <button onClick={logout} className="text-sm text-red-600 hover:underline">
@@ -259,7 +319,7 @@ export default function WorkspacePage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1">
-          <GraphView graph={data?.graph ?? null} onSelect={handleGraphSelect} highlights={highlights} />
+          <GraphView ref={graphRef} graph={data?.graph ?? null} onSelect={handleGraphSelect} highlights={highlights} />
         </div>
 
         <div className="w-[460px] shrink-0 overflow-auto border-l bg-white p-4">

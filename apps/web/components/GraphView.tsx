@@ -1,19 +1,29 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import { GraphPayload, ContextHighlights } from "@/lib/types";
 
-export function GraphView({
-  graph,
-  onSelect,
-  highlights,
-}: {
-  graph: GraphPayload | null;
-  onSelect: (x: any) => void;
-  highlights?: ContextHighlights | null;
-}) {
+export interface GraphViewHandle {
+  exportPng(): string | null;
+}
+
+export const GraphView = forwardRef<
+  GraphViewHandle,
+  {
+    graph: GraphPayload | null;
+    onSelect: (x: any) => void;
+    highlights?: ContextHighlights | null;
+  }
+>(function GraphView({ graph, onSelect, highlights }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<any>(null);
+
+  useImperativeHandle(ref, () => ({
+    exportPng() {
+      if (!cyRef.current) return null;
+      return cyRef.current.png({ full: true, scale: 2, bg: "white" });
+    },
+  }));
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -133,4 +143,4 @@ export function GraphView({
   }, [highlights]);
 
   return <div ref={containerRef} className="h-full w-full" />;
-}
+});

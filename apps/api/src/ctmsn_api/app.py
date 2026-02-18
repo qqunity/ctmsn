@@ -12,7 +12,7 @@ from ctmsn.core.concept import Concept
 from ctmsn.core.predicate import Predicate
 from ctmsn_api.auth import get_current_user
 from ctmsn_api.database import create_tables, get_db, migrate_db
-from ctmsn_api.models import Comment, User, Workspace
+from ctmsn_api.models import Comment, FormulaRecord, NamedContext, User, UserVariable, Workspace
 from ctmsn_api.ops import run_ops
 from ctmsn_api.registry import get as get_spec, init_registry, list_specs
 from ctmsn_api.routes_auth import router as auth_router
@@ -675,12 +675,39 @@ def export_workspace(
 ):
     ws = check_workspace_access(workspace_id, user, db)
     import json
+
+    formulas = db.query(FormulaRecord).filter(FormulaRecord.workspace_id == workspace_id).all()
+    variables = db.query(UserVariable).filter(UserVariable.workspace_id == workspace_id).all()
+    contexts = db.query(NamedContext).filter(NamedContext.workspace_id == workspace_id).all()
+
     return {
+        "version": 1,
         "scenario": ws.scenario,
         "mode": ws.mode,
         "name": ws.name,
         "network": json.loads(ws.network_json),
         "context": json.loads(ws.context_json),
+        "formulas": [
+            {"name": f.name, "formula_json": json.loads(f.formula_json)}
+            for f in formulas
+        ],
+        "user_variables": [
+            {
+                "name": v.name,
+                "type_tag": v.type_tag,
+                "domain_type": v.domain_type,
+                "domain_json": json.loads(v.domain_json),
+            }
+            for v in variables
+        ],
+        "named_contexts": [
+            {
+                "name": c.name,
+                "context_json": json.loads(c.context_json),
+                "is_active": c.is_active,
+            }
+            for c in contexts
+        ],
     }
 
 
@@ -711,6 +738,32 @@ def import_workspace(
         context_json=context_json,
     )
     db.add(ws)
+    db.flush()
+
+    for f in d.get("formulas", []):
+        db.add(FormulaRecord(
+            workspace_id=ws.id,
+            name=f.get("name", ""),
+            formula_json=json.dumps(f.get("formula_json", {})),
+        ))
+
+    for v in d.get("user_variables", []):
+        db.add(UserVariable(
+            workspace_id=ws.id,
+            name=v.get("name", ""),
+            type_tag=v.get("type_tag"),
+            domain_type=v.get("domain_type", "enum"),
+            domain_json=json.dumps(v.get("domain_json", {})),
+        ))
+
+    for c in d.get("named_contexts", []):
+        db.add(NamedContext(
+            workspace_id=ws.id,
+            name=c.get("name", ""),
+            context_json=json.dumps(c.get("context_json", {})),
+            is_active=c.get("is_active", 0),
+        ))
+
     db.commit()
     db.refresh(ws)
     return {"id": ws.id, "name": ws.name}
