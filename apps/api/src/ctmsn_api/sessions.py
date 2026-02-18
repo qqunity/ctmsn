@@ -10,7 +10,7 @@ from ctmsn.core.concept import Concept
 from ctmsn.core.network import SemanticNetwork
 from ctmsn.core.predicate import Predicate
 from ctmsn.io.serializer import dump_network
-from ctmsn_api.models import Workspace
+from ctmsn_api.models import NetworkSnapshot, Workspace
 
 
 @dataclass
@@ -127,3 +127,113 @@ def create_workspace(
     db.commit()
     db.refresh(ws)
     return ws.id
+
+
+MAX_UNDO = 15
+
+
+def push_undo(workspace_id: str, db: Session, action: str = "") -> None:
+    ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
+    if not ws:
+        return
+    snap = NetworkSnapshot(
+        workspace_id=workspace_id,
+        network_json=ws.network_json,
+        context_json=ws.context_json,
+        action=action,
+        stack="undo",
+    )
+    db.add(snap)
+    db.query(NetworkSnapshot).filter(
+        NetworkSnapshot.workspace_id == workspace_id,
+        NetworkSnapshot.stack == "redo",
+    ).delete()
+    undo_count = (
+        db.query(NetworkSnapshot)
+        .filter(NetworkSnapshot.workspace_id == workspace_id, NetworkSnapshot.stack == "undo")
+        .count()
+    )
+    if undo_count > MAX_UNDO:
+        oldest = (
+            db.query(NetworkSnapshot)
+            .filter(NetworkSnapshot.workspace_id == workspace_id, NetworkSnapshot.stack == "undo")
+            .order_by(NetworkSnapshot.created_at.asc())
+            .limit(undo_count - MAX_UNDO)
+            .all()
+        )
+        for s in oldest:
+            db.delete(s)
+    db.flush()
+
+
+def do_undo(workspace_id: str, db: Session) -> bool:
+    latest = (
+        db.query(NetworkSnapshot)
+        .filter(NetworkSnapshot.workspace_id == workspace_id, NetworkSnapshot.stack == "undo")
+        .order_by(NetworkSnapshot.created_at.desc())
+        .first()
+    )
+    if not latest:
+        return False
+    ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
+    if not ws:
+        return False
+    redo_snap = NetworkSnapshot(
+        workspace_id=workspace_id,
+        network_json=ws.network_json,
+        context_json=ws.context_json,
+        action=latest.action,
+        stack="redo",
+    )
+    db.add(redo_snap)
+    ws.network_json = latest.network_json
+    ws.context_json = latest.context_json
+    db.delete(latest)
+    db.commit()
+    return True
+
+
+def do_redo(workspace_id: str, db: Session) -> bool:
+    latest = (
+        db.query(NetworkSnapshot)
+        .filter(NetworkSnapshot.workspace_id == workspace_id, NetworkSnapshot.stack == "redo")
+        .order_by(NetworkSnapshot.created_at.desc())
+        .first()
+    )
+    if not latest:
+        return False
+    ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
+    if not ws:
+        return False
+    undo_snap = NetworkSnapshot(
+        workspace_id=workspace_id,
+        network_json=ws.network_json,
+        context_json=ws.context_json,
+        action=latest.action,
+        stack="undo",
+    )
+    db.add(undo_snap)
+    ws.network_json = latest.network_json
+    ws.context_json = latest.context_json
+    db.delete(latest)
+    db.commit()
+    return True
+
+
+def get_history_status(workspace_id: str, db: Session) -> dict:
+    undo_count = (
+        db.query(NetworkSnapshot)
+        .filter(NetworkSnapshot.workspace_id == workspace_id, NetworkSnapshot.stack == "undo")
+        .count()
+    )
+    redo_count = (
+        db.query(NetworkSnapshot)
+        .filter(NetworkSnapshot.workspace_id == workspace_id, NetworkSnapshot.stack == "redo")
+        .count()
+    )
+    return {
+        "can_undo": undo_count > 0,
+        "can_redo": redo_count > 0,
+        "undo_count": undo_count,
+        "redo_count": redo_count,
+    }

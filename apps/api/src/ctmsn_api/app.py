@@ -24,9 +24,13 @@ from ctmsn_api.sessions import (
     context_from_json,
     context_to_json,
     create_workspace,
+    do_redo,
+    do_undo,
+    get_history_status,
     get_session,
     network_from_json,
     network_to_json,
+    push_undo,
     put_session,
 )
 
@@ -85,7 +89,7 @@ def scenarios():
 # --- Session / Load ---
 
 class LoadReq(BaseModel):
-    scenario: str
+    scenario: str = ""
     mode: Optional[str] = None
     derive: bool = True
     name: Optional[str] = None
@@ -97,6 +101,25 @@ def load(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if not req.scenario:
+        from ctmsn.core.network import SemanticNetwork
+        net = SemanticNetwork()
+        ws_name = req.name or "Чистый лист"
+        workspace_id = create_workspace(user.id, "", None, net, db, name=ws_name)
+        return {
+            "session_id": workspace_id,
+            "name": ws_name,
+            "scenario": "",
+            "mode": None,
+            "graph": serialize(net),
+            "derivation": None,
+            "check": None,
+            "forces": None,
+            "force": None,
+            "variables": [],
+            "context": {},
+        }
+
     spec = get_spec(req.scenario)
     net = spec.build(mode=req.mode) if req.mode else spec.build()
 
@@ -137,6 +160,21 @@ def run(
     if not st:
         return {"error": "unknown session"}
 
+    if not st.scenario:
+        return {
+            "session_id": req.session_id,
+            "name": ws.name,
+            "scenario": "",
+            "mode": None,
+            "graph": serialize(st.net),
+            "derivation": None,
+            "check": None,
+            "forces": None,
+            "force": None,
+            "variables": [],
+            "context": {},
+        }
+
     spec = get_spec(st.scenario)
     ops = run_ops(st.net, spec, derive=req.derive, mode=st.mode, context_values=st.context_values)
     return {
@@ -167,6 +205,9 @@ def set_variable(
     st = get_session(req.session_id, db)
     if not st:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    if not st.scenario:
+        raise HTTPException(status_code=400, detail="Blank workspace has no scenario variables")
 
     spec = get_spec(st.scenario)
 
@@ -238,6 +279,7 @@ def add_concept(
         return {"error": "unknown session"}
 
     try:
+        push_undo(req.session_id, db, f"add_concept:{req.id}")
         concept = Concept(id=req.id, label=req.label, tags=frozenset(req.tags))
         st.net.add_concept(concept)
         put_session(req.session_id, st, db)
@@ -264,6 +306,7 @@ def add_predicate(
         return {"error": "unknown session"}
 
     try:
+        push_undo(req.session_id, db, f"add_predicate:{req.name}")
         predicate = Predicate(name=req.name, arity=req.arity)
         st.net.add_predicate(predicate)
         put_session(req.session_id, st, db)
@@ -290,12 +333,259 @@ def add_fact(
         return {"error": "unknown session"}
 
     try:
+        push_undo(req.session_id, db, f"add_fact:{req.predicate}")
         args = tuple(st.net.concepts[cid] for cid in req.args)
         st.net.assert_fact(req.predicate, args)
         put_session(req.session_id, st, db)
         return {"ok": True, "graph": serialize(st.net)}
     except (KeyError, ValueError) as e:
         return {"error": str(e)}
+
+
+# --- Cascade Check ---
+
+@app.get("/api/session/{session_id}/cascade/concept/{concept_id}")
+def cascade_concept(
+    session_id: str,
+    concept_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(session_id, user, db)
+    st = get_session(session_id, db)
+    if not st:
+        return {"error": "unknown session"}
+    facts = st.net._facts_by_concept.get(concept_id, set())
+    return {
+        "count": len(facts),
+        "affected_facts": [
+            {"predicate": f.predicate, "args": [a.id if isinstance(a, Concept) else str(a) for a in f.args]}
+            for f in facts
+        ],
+    }
+
+
+@app.get("/api/session/{session_id}/cascade/predicate/{predicate_name}")
+def cascade_predicate(
+    session_id: str,
+    predicate_name: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(session_id, user, db)
+    st = get_session(session_id, db)
+    if not st:
+        return {"error": "unknown session"}
+    facts = st.net._facts_by_pred.get(predicate_name, set())
+    return {
+        "count": len(facts),
+        "affected_facts": [
+            {"predicate": f.predicate, "args": [a.id if isinstance(a, Concept) else str(a) for a in f.args]}
+            for f in facts
+        ],
+    }
+
+
+# --- Remove / Edit ---
+
+class RemoveConceptReq(BaseModel):
+    session_id: str
+    concept_id: str
+
+
+@app.post("/api/session/remove_concept")
+def remove_concept(
+    req: RemoveConceptReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(req.session_id, user, db)
+    st = get_session(req.session_id, db)
+    if not st:
+        return {"error": "unknown session"}
+    try:
+        push_undo(req.session_id, db, f"remove_concept:{req.concept_id}")
+        removed = st.net.remove_concept(req.concept_id)
+        put_session(req.session_id, st, db)
+        return {
+            "ok": True,
+            "graph": serialize(st.net),
+            "removed_facts": [
+                {"predicate": f.predicate, "args": [a.id if isinstance(a, Concept) else str(a) for a in f.args]}
+                for f in removed
+            ],
+        }
+    except KeyError as e:
+        return {"error": str(e)}
+
+
+class RemovePredicateReq(BaseModel):
+    session_id: str
+    predicate_name: str
+
+
+@app.post("/api/session/remove_predicate")
+def remove_predicate(
+    req: RemovePredicateReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(req.session_id, user, db)
+    st = get_session(req.session_id, db)
+    if not st:
+        return {"error": "unknown session"}
+    try:
+        push_undo(req.session_id, db, f"remove_predicate:{req.predicate_name}")
+        removed = st.net.remove_predicate(req.predicate_name)
+        put_session(req.session_id, st, db)
+        return {
+            "ok": True,
+            "graph": serialize(st.net),
+            "removed_facts": [
+                {"predicate": f.predicate, "args": [a.id if isinstance(a, Concept) else str(a) for a in f.args]}
+                for f in removed
+            ],
+        }
+    except KeyError as e:
+        return {"error": str(e)}
+
+
+class RemoveFactReq(BaseModel):
+    session_id: str
+    predicate: str
+    args: list[str]
+
+
+@app.post("/api/session/remove_fact")
+def remove_fact(
+    req: RemoveFactReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(req.session_id, user, db)
+    st = get_session(req.session_id, db)
+    if not st:
+        return {"error": "unknown session"}
+    try:
+        from ctmsn.core.statement import Statement
+        args = tuple(st.net.concepts[cid] if cid in st.net.concepts else cid for cid in req.args)
+        statement = Statement(predicate=req.predicate, args=args)
+        push_undo(req.session_id, db, f"remove_fact:{req.predicate}")
+        st.net.remove_fact(statement)
+        put_session(req.session_id, st, db)
+        return {"ok": True, "graph": serialize(st.net)}
+    except KeyError as e:
+        return {"error": str(e)}
+
+
+class EditConceptReq(BaseModel):
+    session_id: str
+    concept_id: str
+    label: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+
+@app.post("/api/session/edit_concept")
+def edit_concept(
+    req: EditConceptReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(req.session_id, user, db)
+    st = get_session(req.session_id, db)
+    if not st:
+        return {"error": "unknown session"}
+    try:
+        old = st.net.concepts.get(req.concept_id)
+        if not old:
+            return {"error": f"Unknown concept '{req.concept_id}'"}
+        push_undo(req.session_id, db, f"edit_concept:{req.concept_id}")
+        new_concept = Concept(
+            id=req.concept_id,
+            label=req.label if req.label is not None else old.label,
+            tags=frozenset(req.tags) if req.tags is not None else old.tags,
+            meta=old.meta,
+        )
+        st.net.replace_concept(req.concept_id, new_concept)
+        put_session(req.session_id, st, db)
+        return {"ok": True, "graph": serialize(st.net)}
+    except (KeyError, ValueError) as e:
+        return {"error": str(e)}
+
+
+class EditPredicateReq(BaseModel):
+    session_id: str
+    predicate_name: str
+    arity: Optional[int] = None
+
+
+@app.post("/api/session/edit_predicate")
+def edit_predicate(
+    req: EditPredicateReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(req.session_id, user, db)
+    st = get_session(req.session_id, db)
+    if not st:
+        return {"error": "unknown session"}
+    try:
+        old = st.net.predicates.get(req.predicate_name)
+        if not old:
+            return {"error": f"Unknown predicate '{req.predicate_name}'"}
+        push_undo(req.session_id, db, f"edit_predicate:{req.predicate_name}")
+        new_pred = Predicate(
+            name=req.predicate_name,
+            arity=req.arity if req.arity is not None else old.arity,
+            roles=old.roles,
+        )
+        st.net.replace_predicate(req.predicate_name, new_pred)
+        put_session(req.session_id, st, db)
+        return {"ok": True, "graph": serialize(st.net)}
+    except (KeyError, ValueError) as e:
+        return {"error": str(e)}
+
+
+# --- Undo / Redo ---
+
+@app.post("/api/session/{session_id}/undo")
+def undo(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(session_id, user, db)
+    ok = do_undo(session_id, db)
+    if not ok:
+        return {"ok": False, "error": "Nothing to undo"}
+    st = get_session(session_id, db)
+    hist = get_history_status(session_id, db)
+    return {"ok": True, "graph": serialize(st.net) if st else None, **hist}
+
+
+@app.post("/api/session/{session_id}/redo")
+def redo(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(session_id, user, db)
+    ok = do_redo(session_id, db)
+    if not ok:
+        return {"ok": False, "error": "Nothing to redo"}
+    st = get_session(session_id, db)
+    hist = get_history_status(session_id, db)
+    return {"ok": True, "graph": serialize(st.net) if st else None, **hist}
+
+
+@app.get("/api/session/{session_id}/history")
+def history(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_workspace_access(session_id, user, db)
+    return get_history_status(session_id, db)
 
 
 # --- Workspaces ---

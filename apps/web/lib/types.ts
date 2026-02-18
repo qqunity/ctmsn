@@ -188,6 +188,26 @@ export type ForcingForcesResult = {
   explanation: string[];
 };
 
+export type CascadeInfo = {
+  count: number;
+  affected_facts: Array<{ predicate: string; args: string[] }>;
+};
+
+export type HistoryStatus = {
+  can_undo: boolean;
+  can_redo: boolean;
+  undo_count: number;
+  redo_count: number;
+};
+
+export type UndoRedoResponse = {
+  ok: boolean;
+  error?: string;
+  graph?: GraphPayload;
+  can_undo: boolean;
+  can_redo: boolean;
+};
+
 export type ForcingRunRecord = {
   id: string;
   timestamp: string;

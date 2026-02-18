@@ -18,6 +18,9 @@ import {
   ContextHighlights,
   ForcingCheckResult,
   ForcingForcesResult,
+  CascadeInfo,
+  HistoryStatus,
+  UndoRedoResponse,
 } from "./types";
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./auth";
 
@@ -406,5 +409,74 @@ export async function runForcingForces(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
   });
+  return ensureOk(r);
+}
+
+// ─── Cascade / Delete / Edit ─────────────────────────────────
+
+export async function getCascadeInfo(sessionId: string, type: "concept" | "predicate", id: string): Promise<CascadeInfo> {
+  const r = await authFetch(`${API_BASE}/api/session/${sessionId}/cascade/${type}/${encodeURIComponent(id)}`);
+  return ensureOk(r);
+}
+
+export async function removeConcept(sessionId: string, conceptId: string): Promise<NetworkEditResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/remove_concept`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, concept_id: conceptId }),
+  });
+  return (await r.json()) as NetworkEditResponse;
+}
+
+export async function removePredicate(sessionId: string, predicateName: string): Promise<NetworkEditResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/remove_predicate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, predicate_name: predicateName }),
+  });
+  return (await r.json()) as NetworkEditResponse;
+}
+
+export async function removeFact(sessionId: string, predicate: string, args: string[]): Promise<NetworkEditResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/remove_fact`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, predicate, args }),
+  });
+  return (await r.json()) as NetworkEditResponse;
+}
+
+export async function editConcept(sessionId: string, conceptId: string, data: { label?: string; tags?: string[] }): Promise<NetworkEditResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/edit_concept`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, concept_id: conceptId, ...data }),
+  });
+  return (await r.json()) as NetworkEditResponse;
+}
+
+export async function editPredicate(sessionId: string, predicateName: string, data: { arity?: number }): Promise<NetworkEditResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/edit_predicate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, predicate_name: predicateName, ...data }),
+  });
+  return (await r.json()) as NetworkEditResponse;
+}
+
+// ─── Undo / Redo ─────────────────────────────────────────────
+
+export async function undoNetwork(sessionId: string): Promise<UndoRedoResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/${sessionId}/undo`, { method: "POST" });
+  return (await r.json()) as UndoRedoResponse;
+}
+
+export async function redoNetwork(sessionId: string): Promise<UndoRedoResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/${sessionId}/redo`, { method: "POST" });
+  return (await r.json()) as UndoRedoResponse;
+}
+
+export async function getHistoryStatus(sessionId: string): Promise<HistoryStatus> {
+  const r = await authFetch(`${API_BASE}/api/session/${sessionId}/history`);
   return ensureOk(r);
 }

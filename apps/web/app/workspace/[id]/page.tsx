@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { listScenarios, loadScenario, runScenario, renameWorkspace } from "@/lib/api";
-import { LoadResponse, ScenarioSpec, Equation, ContextHighlights, FormulaInfo, NamedContextInfo } from "@/lib/types";
+import { listScenarios, loadScenario, runScenario, renameWorkspace, undoNetwork, redoNetwork, getHistoryStatus } from "@/lib/api";
+import { LoadResponse, ScenarioSpec, Equation, ContextHighlights, FormulaInfo, NamedContextInfo, HistoryStatus } from "@/lib/types";
 import { ScenarioBar } from "@/components/ScenarioBar";
 import { GraphView } from "@/components/GraphView";
 import { StatusPanel } from "@/components/StatusPanel";
@@ -40,6 +40,7 @@ export default function WorkspacePage() {
   const [activeTermPickerId, setActiveTermPickerId] = useState<string | null>(null);
   const [sharedFormulas, setSharedFormulas] = useState<FormulaInfo[]>([]);
   const [sharedContexts, setSharedContexts] = useState<NamedContextInfo[]>([]);
+  const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ can_undo: false, can_redo: false, undo_count: 0, redo_count: 0 });
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
@@ -62,6 +63,7 @@ export default function WorkspacePage() {
           setScenario(payload.scenario);
           setMode(payload.mode ?? "");
           setWsName(payload.name ?? "");
+          getHistoryStatus(id).then(setHistoryStatus).catch(() => {});
         })
         .catch(() => {});
     }
@@ -105,7 +107,46 @@ export default function WorkspacePage() {
     if (data) {
       setData({ ...data, graph: newGraph });
     }
+    if (sessionId) {
+      getHistoryStatus(sessionId).then(setHistoryStatus).catch(() => {});
+    }
   }
+
+  async function handleUndo() {
+    if (!sessionId || !historyStatus.can_undo) return;
+    const res = await undoNetwork(sessionId);
+    if (res.ok && res.graph && data) {
+      setData({ ...data, graph: res.graph });
+      setHistoryStatus({ can_undo: res.can_undo, can_redo: res.can_redo, undo_count: 0, redo_count: 0 });
+    }
+  }
+
+  async function handleRedo() {
+    if (!sessionId || !historyStatus.can_redo) return;
+    const res = await redoNetwork(sessionId);
+    if (res.ok && res.graph && data) {
+      setData({ ...data, graph: res.graph });
+      setHistoryStatus({ can_undo: res.can_undo, can_redo: res.can_redo, undo_count: 0, redo_count: 0 });
+    }
+  }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if (mod && e.key === "z" && e.shiftKey) {
+        e.preventDefault();
+        handleRedo();
+      } else if (mod && e.key === "y") {
+        e.preventDefault();
+        handleRedo();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   const handleVariableUpdate = useCallback((resp: LoadResponse) => {
     setData(resp);
@@ -178,6 +219,24 @@ export default function WorkspacePage() {
             {wsName || "Без имени"}
           </span>
         )}
+        <div className="flex items-center gap-1 ml-4">
+          <button
+            onClick={handleUndo}
+            disabled={!historyStatus.can_undo}
+            className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
+            title="Отменить (Ctrl+Z)"
+          >
+            &#x21A9;
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={!historyStatus.can_redo}
+            className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
+            title="Повторить (Ctrl+Shift+Z)"
+          >
+            &#x21AA;
+          </button>
+        </div>
         <div className="flex-1" />
         <span className="text-sm text-gray-500">{user.username}</span>
         <button onClick={logout} className="text-sm text-red-600 hover:underline">

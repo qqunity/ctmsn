@@ -37,20 +37,21 @@ def _get_var_map(ws: Workspace, db: Session) -> dict[str, Variable]:
     if not st:
         return {}
     var_map: dict[str, Variable] = {}
-    spec = get_spec(st.scenario)
-    if spec.variables:
-        import inspect
-        sig = inspect.signature(spec.variables)
-        params = list(sig.parameters.keys())
-        if len(params) >= 1:
-            variables_result = spec.variables(st.net)
-        else:
-            variables_result = spec.variables()
-        vars_obj = variables_result[0]
-        for attr_name in dir(vars_obj):
-            val = getattr(vars_obj, attr_name, None)
-            if isinstance(val, Variable):
-                var_map[val.name] = val
+    if st.scenario:
+        spec = get_spec(st.scenario)
+        if spec.variables:
+            import inspect
+            sig = inspect.signature(spec.variables)
+            params = list(sig.parameters.keys())
+            if len(params) >= 1:
+                variables_result = spec.variables(st.net)
+            else:
+                variables_result = spec.variables()
+            vars_obj = variables_result[0]
+            for attr_name in dir(vars_obj):
+                val = getattr(vars_obj, attr_name, None)
+                if isinstance(val, Variable):
+                    var_map[val.name] = val
 
     user_vars = db.query(UserVariable).filter(UserVariable.workspace_id == ws.id).all()
     for uv in user_vars:
@@ -318,7 +319,7 @@ def list_variables(
     st = get_session(wid, db)
     result: list[dict] = []
 
-    if st:
+    if st and st.scenario:
         spec = get_spec(st.scenario)
         scenario_vars = get_variable_info(spec, st.net, st.mode)
         if scenario_vars:
@@ -398,7 +399,7 @@ class CompareContextsReq(BaseModel):
 def _count_context_vars(ws: Workspace, db: Session) -> int:
     st = get_session(ws.id, db)
     count = 0
-    if st:
+    if st and st.scenario:
         spec = get_spec(st.scenario)
         scenario_vars = get_variable_info(spec, st.net, st.mode)
         if scenario_vars:

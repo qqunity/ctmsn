@@ -41,6 +41,16 @@ export default function WorkspacesPage() {
     }
   }
 
+  async function handleBlankCanvas() {
+    setCreating(true);
+    try {
+      const res = await loadScenario({ scenario: "", name: wsName || null });
+      router.push(`/workspace/${res.session_id}`);
+    } catch {
+      setCreating(false);
+    }
+  }
+
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -124,6 +134,13 @@ export default function WorkspacesPage() {
                 className="bg-blue-600 text-white rounded px-4 py-2 text-sm hover:bg-blue-700 disabled:opacity-50"
               >
                 {creating ? "Создание..." : "Создать"}
+              </button>
+              <button
+                onClick={handleBlankCanvas}
+                disabled={creating}
+                className="bg-gray-600 text-white rounded px-4 py-2 text-sm hover:bg-gray-700 disabled:opacity-50"
+              >
+                Чистый лист
               </button>
             </div>
           </div>

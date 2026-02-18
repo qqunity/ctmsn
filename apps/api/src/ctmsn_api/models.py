@@ -94,6 +94,20 @@ class UserVariable(Base):
     workspace = relationship("Workspace")
 
 
+class NetworkSnapshot(Base):
+    __tablename__ = "network_snapshots"
+
+    id = Column(String(32), primary_key=True, default=_uuid_hex)
+    workspace_id = Column(String(32), ForeignKey("workspaces.id"), nullable=False, index=True)
+    network_json = Column(Text, nullable=False)
+    context_json = Column(Text, nullable=False, default="{}")
+    action = Column(String(255), nullable=False, default="")
+    stack = Column(String(10), nullable=False, default="undo")
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    workspace = relationship("Workspace")
+
+
 class NamedContext(Base):
     __tablename__ = "named_contexts"
 

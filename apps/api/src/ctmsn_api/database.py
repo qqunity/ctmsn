@@ -61,6 +61,15 @@ def migrate_db() -> None:
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )""",
+        """CREATE TABLE IF NOT EXISTS network_snapshots (
+            id VARCHAR(32) PRIMARY KEY,
+            workspace_id VARCHAR(32) NOT NULL REFERENCES workspaces(id),
+            network_json TEXT NOT NULL,
+            context_json TEXT NOT NULL DEFAULT '{}',
+            action VARCHAR(255) NOT NULL DEFAULT '',
+            stack VARCHAR(10) NOT NULL DEFAULT 'undo',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
     ]
     with engine.connect() as conn:
         for stmt in migrations:
