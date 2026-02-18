@@ -3,23 +3,21 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { RegisterForm } from "@/components/RegisterForm";
 
-export default function Page() {
+export default function RegisterPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
-    if (user) {
+    if (!loading && user) {
       router.replace("/workspaces");
-    } else {
-      router.replace("/login");
     }
   }, [user, loading, router]);
 
   return (
-    <div className="flex h-screen items-center justify-center">
-      <p className="text-gray-500">Загрузка...</p>
+    <div className="flex h-screen items-center justify-center bg-gray-50">
+      <RegisterForm />
     </div>
   );
 }

@@ -1,0 +1,111 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import { WorkspaceList } from "@/components/WorkspaceList";
+import { listScenarios, loadScenario } from "@/lib/api";
+import { ScenarioSpec } from "@/lib/types";
+
+export default function WorkspacesPage() {
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+  const [scenarios, setScenarios] = useState<ScenarioSpec[]>([]);
+  const [scenario, setScenario] = useState("");
+  const [mode, setMode] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [key, setKey] = useState(0);
+
+  useEffect(() => {
+    if (!loading && !user) router.replace("/login");
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    listScenarios().then((s) => {
+      setScenarios(s);
+      if (s.length) setScenario(s[0].name);
+    });
+  }, []);
+
+  const currentSpec = scenarios.find((s) => s.name === scenario);
+
+  async function handleCreate() {
+    setCreating(true);
+    try {
+      const res = await loadScenario({ scenario, mode: mode || null });
+      router.push(`/workspace/${res.session_id}`);
+    } catch {
+      setCreating(false);
+    }
+  }
+
+  if (loading || !user) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
+        <h1 className="text-lg font-bold">CTnSS</h1>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">
+            {user.username} ({user.role === "teacher" ? "преподаватель" : "студент"})
+          </span>
+          {user.role === "teacher" && (
+            <a href="/teacher" className="text-sm text-blue-600 hover:underline">
+              Панель преподавателя
+            </a>
+          )}
+          <button onClick={logout} className="text-sm text-red-600 hover:underline">
+            Выйти
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto p-6 space-y-6">
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Новое пространство</h2>
+          <div className="flex gap-2 items-end">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Сценарий</label>
+              <select
+                value={scenario}
+                onChange={(e) => { setScenario(e.target.value); setMode(""); }}
+                className="border rounded px-3 py-2 text-sm"
+              >
+                {scenarios.map((s) => (
+                  <option key={s.name} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            {currentSpec && currentSpec.modes.length > 0 && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Режим</label>
+                <select
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                >
+                  <option value="">—</option>
+                  {currentSpec.modes.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              className="bg-blue-600 text-white rounded px-4 py-2 text-sm hover:bg-blue-700 disabled:opacity-50"
+            >
+              {creating ? "Создание..." : "Создать"}
+            </button>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Мои пространства</h2>
+          <WorkspaceList key={key} />
+        </section>
+      </main>
+    </div>
+  );
+}

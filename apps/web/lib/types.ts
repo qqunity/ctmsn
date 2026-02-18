@@ -52,3 +52,38 @@ export type NetworkEditResponse = {
   error?: string;
   graph?: GraphPayload;
 };
+
+export type UserInfo = {
+  id: string;
+  username: string;
+  role: "student" | "teacher";
+};
+
+export type TokenResponse = {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  role: string;
+};
+
+export type WorkspaceInfo = {
+  id: string;
+  scenario: string;
+  mode: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommentInfo = {
+  id: string;
+  author_id: string;
+  author_username: string;
+  text: string;
+  created_at: string;
+};
+
+export type StudentInfo = {
+  id: string;
+  username: string;
+  workspace_count: number;
+};
