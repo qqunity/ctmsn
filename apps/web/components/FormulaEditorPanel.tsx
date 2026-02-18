@@ -11,6 +11,7 @@ type Props = {
   variables: VariableInfo[];
   activeTermPickerId: string | null;
   onTermPickerFocus: (id: string | null) => void;
+  onFormulasChange?: (formulas: FormulaInfo[]) => void;
 };
 
 const RESULT_COLORS: Record<string, string> = {
@@ -19,7 +20,7 @@ const RESULT_COLORS: Record<string, string> = {
   unknown: "bg-yellow-100 text-yellow-700",
 };
 
-export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPickerId, onTermPickerFocus }: Props) {
+export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPickerId, onTermPickerFocus, onFormulasChange }: Props) {
   const [formulas, setFormulas] = useState<FormulaInfo[]>([]);
   const [evalResults, setEvalResults] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -33,10 +34,11 @@ export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPick
     try {
       const list = await listFormulas(sessionId);
       setFormulas(list);
+      onFormulasChange?.(list);
     } catch {
       // ignore
     }
-  }, [sessionId]);
+  }, [sessionId, onFormulasChange]);
 
   useEffect(() => {
     fetchFormulas();

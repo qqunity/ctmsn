@@ -18,9 +18,10 @@ type Props = {
   variables: VariableInfo[];
   onActivate?: () => void;
   onHighlightsChange?: (h: ContextHighlights) => void;
+  onContextsChange?: (contexts: NamedContextInfo[]) => void;
 };
 
-export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlightsChange }: Props) {
+export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlightsChange, onContextsChange }: Props) {
   const [contexts, setContexts] = useState<NamedContextInfo[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -34,10 +35,11 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
     try {
       const list = await listContexts(sessionId);
       setContexts(list);
+      onContextsChange?.(list);
     } catch {
       // ignore
     }
-  }, [sessionId]);
+  }, [sessionId, onContextsChange]);
 
   useEffect(() => {
     fetchContexts();

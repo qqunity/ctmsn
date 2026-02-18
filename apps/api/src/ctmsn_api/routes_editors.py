@@ -626,3 +626,189 @@ def get_context_highlights(
         "nodes": sorted(highlighted_nodes),
         "edges": sorted(highlighted_edges),
     }
+
+
+# ─── Forcing ──────────────────────────────────────────────────
+
+class ForcingCheckReq(BaseModel):
+    context_id: Optional[str] = None
+    condition_ids: list[str]
+
+
+class ConditionResultItem(BaseModel):
+    formula_id: str
+    formula_name: str
+    formula_text: str
+    result: str  # "true" | "false" | "unknown"
+
+
+class ForcingCheckResp(BaseModel):
+    ok: bool
+    conditions: list[ConditionResultItem]
+
+
+def _build_forcing_context(ws: Workspace, wid: str, context_id: str | None, db: Session) -> tuple:
+    """Build (net, ctx) pair for forcing operations. Returns (net, Context)."""
+    st = get_session(wid, db)
+    if not st:
+        raise HTTPException(status_code=400, detail="No session for workspace")
+
+    var_map = _get_var_map(ws, db)
+
+    ctx_values = st.context_values
+    if context_id:
+        named_ctx = db.query(NamedContext).filter(
+            NamedContext.id == context_id, NamedContext.workspace_id == wid
+        ).first()
+        if named_ctx:
+            ctx_values = context_from_json(named_ctx.context_json, st.net)
+
+    ctx = Context()
+    for k, v in ctx_values.items():
+        if k in var_map:
+            try:
+                ctx.set(var_map[k], v)
+            except (ValueError, TypeError):
+                pass
+
+    return st.net, ctx, var_map
+
+
+def _eval_condition(rec: FormulaRecord, net, ctx, var_map) -> ConditionResultItem:
+    formula_data = json.loads(rec.formula_json)
+    text_repr = ""
+    result_str = "unknown"
+    try:
+        f = formula_from_json(formula_data, net, var_map)
+        text_repr = formula_to_text(f)
+        result = evaluate(f, net, ctx)
+        result_str = result.value
+    except Exception:
+        text_repr = text_repr or "(invalid)"
+    return ConditionResultItem(
+        formula_id=rec.id,
+        formula_name=rec.name,
+        formula_text=text_repr,
+        result=result_str,
+    )
+
+
+@router.post("/api/workspaces/{wid}/forcing/check")
+def forcing_check(
+    wid: str,
+    req: ForcingCheckReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = _check_workspace(wid, user, db)
+    net, ctx, var_map = _build_forcing_context(ws, wid, req.context_id, db)
+
+    conditions: list[ConditionResultItem] = []
+    for cid in req.condition_ids:
+        rec = db.query(FormulaRecord).filter(
+            FormulaRecord.id == cid, FormulaRecord.workspace_id == wid
+        ).first()
+        if not rec:
+            continue
+        conditions.append(_eval_condition(rec, net, ctx, var_map))
+
+    ok = all(c.result != "false" for c in conditions)
+    return ForcingCheckResp(ok=ok, conditions=conditions).model_dump()
+
+
+class ForcingForcesReq(BaseModel):
+    context_id: Optional[str] = None
+    condition_ids: list[str]
+    phi_id: str
+
+
+class ForcingForcesResp(BaseModel):
+    result: str
+    phi_name: str
+    phi_text: str
+    phi_result: str
+    conditions_ok: bool
+    conditions: list[ConditionResultItem]
+    explanation: list[str]
+
+
+@router.post("/api/workspaces/{wid}/forcing/forces")
+def forcing_forces(
+    wid: str,
+    req: ForcingForcesReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = _check_workspace(wid, user, db)
+    net, ctx, var_map = _build_forcing_context(ws, wid, req.context_id, db)
+
+    # 1. Evaluate conditions
+    conditions: list[ConditionResultItem] = []
+    for cid in req.condition_ids:
+        rec = db.query(FormulaRecord).filter(
+            FormulaRecord.id == cid, FormulaRecord.workspace_id == wid
+        ).first()
+        if not rec:
+            continue
+        conditions.append(_eval_condition(rec, net, ctx, var_map))
+
+    conditions_ok = all(c.result != "false" for c in conditions)
+
+    # 2. Evaluate phi
+    phi_rec = db.query(FormulaRecord).filter(
+        FormulaRecord.id == req.phi_id, FormulaRecord.workspace_id == wid
+    ).first()
+    if not phi_rec:
+        raise HTTPException(status_code=404, detail="Target formula not found")
+
+    phi_data = json.loads(phi_rec.formula_json)
+    phi_name = phi_rec.name
+    phi_text = ""
+    phi_result = "unknown"
+    try:
+        phi_f = formula_from_json(phi_data, net, var_map)
+        phi_text = formula_to_text(phi_f)
+        phi_eval = evaluate(phi_f, net, ctx)
+        phi_result = phi_eval.value
+    except Exception:
+        phi_text = phi_text or "(invalid)"
+
+    # 3. Compute result
+    has_violated = any(c.result == "false" for c in conditions)
+    has_unknown_cond = any(c.result == "unknown" for c in conditions)
+
+    if has_violated:
+        result = "false"
+    elif phi_result == "false":
+        result = "false"
+    elif phi_result == "true" and not has_unknown_cond:
+        result = "true"
+    else:
+        result = "unknown"
+
+    # 4. Explanation
+    _RESULT_LABELS = {"true": "выполнено", "false": "НАРУШЕНО", "unknown": "неизвестно"}
+    _PHI_LABELS = {"true": "ИСТИНА", "false": "ЛОЖЬ", "unknown": "НЕИЗВЕСТНО"}
+    explanation: list[str] = [f"Проверено условий: {len(conditions)}"]
+    for c in conditions:
+        explanation.append(f"• {c.formula_name}: {_RESULT_LABELS.get(c.result, c.result)}")
+    explanation.append(f"Целевая формула (φ): {phi_name} → {_PHI_LABELS.get(phi_result, phi_result)}")
+
+    if result == "true":
+        explanation.append("Итог: контекст форсирует φ — все условия выполнены и φ истинна")
+    elif has_violated:
+        explanation.append("Итог: форсирование невозможно — есть нарушенные условия")
+    elif phi_result == "false":
+        explanation.append("Итог: форсирование невозможно — целевая формула ложна")
+    else:
+        explanation.append("Итог: результат неопределён — недостаточно данных")
+
+    return ForcingForcesResp(
+        result=result,
+        phi_name=phi_name,
+        phi_text=phi_text,
+        phi_result=phi_result,
+        conditions_ok=conditions_ok,
+        conditions=conditions,
+        explanation=explanation,
+    ).model_dump()

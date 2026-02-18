@@ -16,6 +16,8 @@ import {
   NamedContextInfo,
   ContextCompareResult,
   ContextHighlights,
+  ForcingCheckResult,
+  ForcingForcesResult,
 } from "./types";
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./auth";
 
@@ -378,5 +380,31 @@ export async function compareContexts(workspaceId: string, contextIds: string[])
 
 export async function getContextHighlights(workspaceId: string, contextId: string): Promise<ContextHighlights> {
   const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts/${contextId}/highlights`);
+  return ensureOk(r);
+}
+
+// ─── Forcing ─────────────────────────────────────────────────
+
+export async function runForcingCheck(
+  workspaceId: string,
+  req: { context_id?: string | null; condition_ids: string[] },
+): Promise<ForcingCheckResult> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/forcing/check`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  return ensureOk(r);
+}
+
+export async function runForcingForces(
+  workspaceId: string,
+  req: { context_id?: string | null; condition_ids: string[]; phi_id: string },
+): Promise<ForcingForcesResult> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/forcing/forces`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
   return ensureOk(r);
 }

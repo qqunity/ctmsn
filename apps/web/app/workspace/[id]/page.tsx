@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { listScenarios, loadScenario, runScenario, renameWorkspace } from "@/lib/api";
-import { LoadResponse, ScenarioSpec, Equation, ContextHighlights } from "@/lib/types";
+import { LoadResponse, ScenarioSpec, Equation, ContextHighlights, FormulaInfo, NamedContextInfo } from "@/lib/types";
 import { ScenarioBar } from "@/components/ScenarioBar";
 import { GraphView } from "@/components/GraphView";
 import { StatusPanel } from "@/components/StatusPanel";
@@ -15,6 +15,7 @@ import { CommentPanel } from "@/components/CommentPanel";
 import { VariableEditorPanel } from "@/components/VariableEditorPanel";
 import { ContextEditorPanel } from "@/components/ContextEditorPanel";
 import { FormulaEditorPanel } from "@/components/FormulaEditorPanel";
+import { ForcingPanel } from "@/components/ForcingPanel";
 
 export default function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +38,8 @@ export default function WorkspacePage() {
   // New state for editors
   const [highlights, setHighlights] = useState<ContextHighlights | null>(null);
   const [activeTermPickerId, setActiveTermPickerId] = useState<string | null>(null);
+  const [sharedFormulas, setSharedFormulas] = useState<FormulaInfo[]>([]);
+  const [sharedContexts, setSharedContexts] = useState<NamedContextInfo[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
@@ -124,6 +127,14 @@ export default function WorkspacePage() {
     setSelected(x);
   }, [activeTermPickerId]);
 
+  const handleFormulasChange = useCallback((formulas: FormulaInfo[]) => {
+    setSharedFormulas(formulas);
+  }, []);
+
+  const handleContextsChange = useCallback((contexts: NamedContextInfo[]) => {
+    setSharedContexts(contexts);
+  }, []);
+
   async function handleNameSave() {
     if (!nameInput.trim() || nameInput.trim() === wsName) {
       setEditingName(false);
@@ -210,6 +221,7 @@ export default function WorkspacePage() {
                 variables={data?.variables ?? []}
                 onActivate={handleContextActivate}
                 onHighlightsChange={setHighlights}
+                onContextsChange={handleContextsChange}
               />
             )}
             {sessionId && (
@@ -219,6 +231,14 @@ export default function WorkspacePage() {
                 variables={data?.variables ?? []}
                 activeTermPickerId={activeTermPickerId}
                 onTermPickerFocus={setActiveTermPickerId}
+                onFormulasChange={handleFormulasChange}
+              />
+            )}
+            {sessionId && (
+              <ForcingPanel
+                sessionId={sessionId}
+                formulas={sharedFormulas}
+                contexts={sharedContexts}
               />
             )}
             {sessionId && (

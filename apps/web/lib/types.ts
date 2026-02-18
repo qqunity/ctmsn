@@ -163,3 +163,37 @@ export type ContextHighlights = {
   nodes: string[];
   edges: string[];
 };
+
+// ─── Forcing Panel Types ────────────────────────────────────
+
+export type ConditionResultItem = {
+  formula_id: string;
+  formula_name: string;
+  formula_text: string;
+  result: "true" | "false" | "unknown";
+};
+
+export type ForcingCheckResult = {
+  ok: boolean;
+  conditions: ConditionResultItem[];
+};
+
+export type ForcingForcesResult = {
+  result: "true" | "false" | "unknown";
+  phi_name: string;
+  phi_text: string;
+  phi_result: string;
+  conditions_ok: boolean;
+  conditions: ConditionResultItem[];
+  explanation: string[];
+};
+
+export type ForcingRunRecord = {
+  id: string;
+  timestamp: string;
+  type: "check" | "forces";
+  context_name: string;
+  condition_names: string[];
+  phi_name: string | null;
+  result_summary: string;
+};
