@@ -10,6 +10,12 @@ import {
   WorkspaceInfo,
   CommentInfo,
   StudentInfo,
+  FormulaNode,
+  FormulaInfo,
+  UserVariableInfo,
+  NamedContextInfo,
+  ContextCompareResult,
+  ContextHighlights,
 } from "./types";
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./auth";
 
@@ -234,5 +240,143 @@ export async function addTeacherComment(workspaceId: string, text: string): Prom
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
   });
+  return ensureOk(r);
+}
+
+// ─── Formula CRUD ────────────────────────────────────────────
+
+export async function listFormulas(workspaceId: string): Promise<FormulaInfo[]> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/formulas`);
+  const j = await r.json();
+  return j.formulas as FormulaInfo[];
+}
+
+export async function createFormula(workspaceId: string, name: string, formula: FormulaNode): Promise<FormulaInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/formulas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, formula }),
+  });
+  return ensureOk(r);
+}
+
+export async function updateFormula(workspaceId: string, formulaId: string, data: { name?: string; formula?: FormulaNode }): Promise<FormulaInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/formulas/${formulaId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return ensureOk(r);
+}
+
+export async function deleteFormula(workspaceId: string, formulaId: string): Promise<{ ok: boolean }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/formulas/${formulaId}`, {
+    method: "DELETE",
+  });
+  return ensureOk(r);
+}
+
+export async function evaluateFormula(workspaceId: string, formulaId: string, contextId?: string): Promise<{ result: string }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/formulas/${formulaId}/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context_id: contextId ?? null }),
+  });
+  return ensureOk(r);
+}
+
+// ─── Variable CRUD ───────────────────────────────────────────
+
+export async function listAllVariables(workspaceId: string): Promise<UserVariableInfo[]> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/variables`);
+  const j = await r.json();
+  return j.variables as UserVariableInfo[];
+}
+
+export async function createVariable(workspaceId: string, data: { name: string; type_tag?: string; domain_type: string; domain: Record<string, any> }): Promise<UserVariableInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/variables`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return ensureOk(r);
+}
+
+export async function updateVariable(workspaceId: string, varId: string, data: { name?: string; type_tag?: string; domain_type?: string; domain?: Record<string, any> }): Promise<UserVariableInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/variables/${varId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return ensureOk(r);
+}
+
+export async function deleteVariable(workspaceId: string, varId: string): Promise<{ ok: boolean }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/variables/${varId}`, {
+    method: "DELETE",
+  });
+  return ensureOk(r);
+}
+
+// ─── Context CRUD ────────────────────────────────────────────
+
+export async function listContexts(workspaceId: string): Promise<NamedContextInfo[]> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts`);
+  const j = await r.json();
+  return j.contexts as NamedContextInfo[];
+}
+
+export async function createContext(workspaceId: string, name: string, cloneFrom?: string): Promise<NamedContextInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, clone_from: cloneFrom ?? null }),
+  });
+  return ensureOk(r);
+}
+
+export async function updateContext(workspaceId: string, contextId: string, data: { name?: string; context?: Record<string, any> }): Promise<NamedContextInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts/${contextId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return ensureOk(r);
+}
+
+export async function deleteContext(workspaceId: string, contextId: string): Promise<{ ok: boolean }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts/${contextId}`, {
+    method: "DELETE",
+  });
+  return ensureOk(r);
+}
+
+export async function activateContext(workspaceId: string, contextId: string): Promise<NamedContextInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts/${contextId}/activate`, {
+    method: "POST",
+  });
+  return ensureOk(r);
+}
+
+export async function setContextVariable(workspaceId: string, contextId: string, variable: string, value: any): Promise<NamedContextInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts/${contextId}/set_variable`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ variable, value }),
+  });
+  return ensureOk(r);
+}
+
+export async function compareContexts(workspaceId: string, contextIds: string[]): Promise<ContextCompareResult> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts/compare`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context_ids: contextIds }),
+  });
+  return ensureOk(r);
+}
+
+export async function getContextHighlights(workspaceId: string, contextId: string): Promise<ContextHighlights> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/contexts/${contextId}/highlights`);
   return ensureOk(r);
 }

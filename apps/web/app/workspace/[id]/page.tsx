@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { listScenarios, loadScenario, runScenario, renameWorkspace } from "@/lib/api";
-import { LoadResponse, ScenarioSpec, Equation } from "@/lib/types";
+import { LoadResponse, ScenarioSpec, Equation, ContextHighlights } from "@/lib/types";
 import { ScenarioBar } from "@/components/ScenarioBar";
 import { GraphView } from "@/components/GraphView";
 import { StatusPanel } from "@/components/StatusPanel";
@@ -12,7 +12,9 @@ import { EquationsPanel } from "@/components/EquationsPanel";
 import { DetailsPanel } from "@/components/DetailsPanel";
 import { NetworkEditorPanel } from "@/components/NetworkEditorPanel";
 import { CommentPanel } from "@/components/CommentPanel";
-import { VariablesPanel } from "@/components/VariablesPanel";
+import { VariableEditorPanel } from "@/components/VariableEditorPanel";
+import { ContextEditorPanel } from "@/components/ContextEditorPanel";
+import { FormulaEditorPanel } from "@/components/FormulaEditorPanel";
 
 export default function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +33,10 @@ export default function WorkspacePage() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [pendingRequest, setPendingRequest] = useState(false);
+
+  // New state for editors
+  const [highlights, setHighlights] = useState<ContextHighlights | null>(null);
+  const [activeTermPickerId, setActiveTermPickerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
@@ -77,6 +83,7 @@ export default function WorkspacePage() {
     setData(payload);
     setWsName(payload.name ?? "");
     setSelected(null);
+    setHighlights(null);
     router.replace(`/workspace/${payload.session_id}`);
   }
 
@@ -100,6 +107,22 @@ export default function WorkspacePage() {
   const handleVariableUpdate = useCallback((resp: LoadResponse) => {
     setData(resp);
   }, []);
+
+  const handleContextActivate = useCallback(() => {
+    if (sessionId) {
+      runScenario({ session_id: sessionId, derive: true })
+        .then((payload) => setData(payload))
+        .catch(() => {});
+    }
+  }, [sessionId]);
+
+  const handleGraphSelect = useCallback((x: any) => {
+    if (activeTermPickerId) {
+      // nothing — TermPicker handles this via its own dropdown
+      // but we can still set selected for details
+    }
+    setSelected(x);
+  }, [activeTermPickerId]);
 
   async function handleNameSave() {
     if (!nameInput.trim() || nameInput.trim() === wsName) {
@@ -166,18 +189,36 @@ export default function WorkspacePage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1">
-          <GraphView graph={data?.graph ?? null} onSelect={setSelected} />
+          <GraphView graph={data?.graph ?? null} onSelect={handleGraphSelect} highlights={highlights} />
         </div>
 
         <div className="w-[460px] shrink-0 overflow-auto border-l bg-white p-4">
           <div className="space-y-4">
             <StatusPanel data={data} />
             {data?.variables && data.variables.length > 0 && (
-              <VariablesPanel
+              <VariableEditorPanel
                 variables={data.variables}
                 context={data.context ?? {}}
                 sessionId={sessionId}
+                graph={data?.graph ?? null}
                 onUpdate={handleVariableUpdate}
+              />
+            )}
+            {sessionId && (
+              <ContextEditorPanel
+                sessionId={sessionId}
+                variables={data?.variables ?? []}
+                onActivate={handleContextActivate}
+                onHighlightsChange={setHighlights}
+              />
+            )}
+            {sessionId && (
+              <FormulaEditorPanel
+                sessionId={sessionId}
+                graph={data?.graph ?? null}
+                variables={data?.variables ?? []}
+                activeTermPickerId={activeTermPickerId}
+                onTermPickerFocus={setActiveTermPickerId}
               />
             )}
             {sessionId && (

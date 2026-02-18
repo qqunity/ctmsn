@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, String, Text
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ctmsn_api.database import Base
@@ -65,3 +65,44 @@ class Comment(Base):
 
     workspace = relationship("Workspace", back_populates="comments")
     author = relationship("User", back_populates="comments")
+
+
+class FormulaRecord(Base):
+    __tablename__ = "formula_records"
+
+    id = Column(String(32), primary_key=True, default=_uuid_hex)
+    workspace_id = Column(String(32), ForeignKey("workspaces.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    formula_json = Column(Text, nullable=False, default="{}")
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    workspace = relationship("Workspace")
+
+
+class UserVariable(Base):
+    __tablename__ = "user_variables"
+
+    id = Column(String(32), primary_key=True, default=_uuid_hex)
+    workspace_id = Column(String(32), ForeignKey("workspaces.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    type_tag = Column(String(150), nullable=True)
+    domain_type = Column(String(50), nullable=False)  # "enum" | "range" | "predicate"
+    domain_json = Column(Text, nullable=False, default="{}")
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    workspace = relationship("Workspace")
+
+
+class NamedContext(Base):
+    __tablename__ = "named_contexts"
+
+    id = Column(String(32), primary_key=True, default=_uuid_hex)
+    workspace_id = Column(String(32), ForeignKey("workspaces.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    context_json = Column(Text, nullable=False, default="{}")
+    is_active = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    workspace = relationship("Workspace")

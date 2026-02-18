@@ -37,47 +37,53 @@ def _build_context(variables_result: tuple | None, context_values: dict[str, Any
     return ctx
 
 
-def get_variable_info(spec, net, mode: str | None = None) -> list[dict[str, Any]] | None:
-    if not spec.variables:
-        return None
-
-    sig = inspect.signature(spec.variables)
-    params = list(sig.parameters.keys())
-    if 'net' in params or len(params) >= 1:
-        variables_result = spec.variables(net)
-    else:
-        variables_result = spec.variables()
-
-    vars_obj = variables_result[0]
+def get_variable_info(
+    spec, net, mode: str | None = None, user_variables: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]] | None:
     result: list[dict[str, Any]] = []
-    for attr_name in dir(vars_obj):
-        val = getattr(vars_obj, attr_name, None)
-        if not isinstance(val, Variable):
-            continue
-        info: dict[str, Any] = {
-            "name": val.name,
-            "type_tag": val.type_tag,
-        }
-        domain = val.domain
-        if isinstance(domain, EnumDomain):
-            info["domain_type"] = "enum"
-            values = []
-            for v in domain.values:
-                if isinstance(v, Concept):
-                    values.append(v.id)
-                else:
-                    values.append(str(v))
-            info["values"] = values
-        elif isinstance(domain, RangeDomain):
-            info["domain_type"] = "range"
-            info["min"] = domain.min_value
-            info["max"] = domain.max_value
-        elif isinstance(domain, PredicateDomain):
-            info["domain_type"] = "predicate"
+
+    if spec.variables:
+        sig = inspect.signature(spec.variables)
+        params = list(sig.parameters.keys())
+        if 'net' in params or len(params) >= 1:
+            variables_result = spec.variables(net)
         else:
-            info["domain_type"] = "unknown"
-        result.append(info)
-    return result
+            variables_result = spec.variables()
+
+        vars_obj = variables_result[0]
+        for attr_name in dir(vars_obj):
+            val = getattr(vars_obj, attr_name, None)
+            if not isinstance(val, Variable):
+                continue
+            info: dict[str, Any] = {
+                "name": val.name,
+                "type_tag": val.type_tag,
+                "origin": "scenario",
+            }
+            domain = val.domain
+            if isinstance(domain, EnumDomain):
+                info["domain_type"] = "enum"
+                values = []
+                for v in domain.values:
+                    if isinstance(v, Concept):
+                        values.append(v.id)
+                    else:
+                        values.append(str(v))
+                info["values"] = values
+            elif isinstance(domain, RangeDomain):
+                info["domain_type"] = "range"
+                info["min"] = domain.min_value
+                info["max"] = domain.max_value
+            elif isinstance(domain, PredicateDomain):
+                info["domain_type"] = "predicate"
+            else:
+                info["domain_type"] = "unknown"
+            result.append(info)
+
+    if user_variables:
+        result.extend(user_variables)
+
+    return result if result else None
 
 
 def _get_variables_result(spec, net):

@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { GraphPayload } from "@/lib/types";
+import { GraphPayload, ContextHighlights } from "@/lib/types";
 
 export function GraphView({
   graph,
   onSelect,
+  highlights,
 }: {
   graph: GraphPayload | null;
   onSelect: (x: any) => void;
+  highlights?: ContextHighlights | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<any>(null);
@@ -79,12 +81,28 @@ export function GraphView({
               "font-size": "9px",
             } as any,
           },
+          {
+            selector: "node.highlighted",
+            style: {
+              "border-width": 4,
+              "border-color": "#22c55e",
+              "border-style": "solid",
+            } as any,
+          },
+          {
+            selector: "edge.highlighted",
+            style: {
+              "line-color": "#22c55e",
+              "target-arrow-color": "#22c55e",
+              width: 3,
+            } as any,
+          },
         ],
         layout: { name: "cose" } as any,
       });
 
-      cy.on("tap", "node", (evt) => onSelect(evt.target.data()));
-      cy.on("tap", "edge", (evt) => onSelect(evt.target.data()));
+      cy.on("tap", "node", (evt: any) => onSelect(evt.target.data()));
+      cy.on("tap", "edge", (evt: any) => onSelect(evt.target.data()));
 
       cyRef.current = cy;
     });
@@ -96,6 +114,23 @@ export function GraphView({
       }
     };
   }, [graph, onSelect]);
+
+  // Separate effect for highlights — does NOT re-render graph
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    cy.elements().removeClass("highlighted");
+
+    if (highlights) {
+      for (const nodeId of highlights.nodes) {
+        cy.getElementById(nodeId).addClass("highlighted");
+      }
+      for (const edgeId of highlights.edges) {
+        cy.getElementById(edgeId).addClass("highlighted");
+      }
+    }
+  }, [highlights]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }

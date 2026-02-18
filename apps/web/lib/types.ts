@@ -100,3 +100,66 @@ export type StudentInfo = {
   username: string;
   workspace_count: number;
 };
+
+// ─── Formula Editor Types ────────────────────────────────────
+
+export type TermRef =
+  | { kind: "concept"; id: string }
+  | { kind: "variable"; name: string }
+  | { kind: "literal"; value: string | number | boolean };
+
+export type FormulaNode =
+  | { type: "FactAtom"; predicate: string; args: TermRef[] }
+  | { type: "EqAtom"; left: TermRef; right: TermRef }
+  | { type: "Not"; inner: FormulaNode }
+  | { type: "And"; items: FormulaNode[] }
+  | { type: "Or"; items: FormulaNode[] }
+  | { type: "Implies"; left: FormulaNode; right: FormulaNode };
+
+export type FormulaInfo = {
+  id: string;
+  name: string;
+  formula: FormulaNode;
+  text: string;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+// ─── Variable/Domain Editor Types ────────────────────────────
+
+export type UserVariableInfo = {
+  id?: string;
+  name: string;
+  type_tag: string | null;
+  domain_type: "enum" | "range" | "predicate";
+  domain?: Record<string, any>;
+  values?: string[];
+  min?: number;
+  max?: number;
+  origin: "scenario" | "user";
+  created_at?: string | null;
+};
+
+// ─── Context Editor Types ────────────────────────────────────
+
+export type NamedContextInfo = {
+  id: string;
+  name: string;
+  context: Record<string, any>;
+  is_active: boolean;
+  is_complete: boolean;
+  total_vars: number;
+  assigned_vars: number;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type ContextCompareResult = {
+  contexts: NamedContextInfo[];
+  diff: Record<string, any[]>;
+};
+
+export type ContextHighlights = {
+  nodes: string[];
+  edges: string[];
+};
