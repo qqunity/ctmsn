@@ -14,6 +14,7 @@ class ScenarioSpec:
     goal: Optional[Callable[..., Formula]] = None
     conditions: Optional[Callable[..., Conditions]] = None
     modes: tuple[str, ...] = ()
+    variables: Optional[Callable[..., tuple]] = None
 
 SCENARIOS: dict[str, ScenarioSpec] = {}
 
@@ -58,6 +59,7 @@ def init_registry() -> None:
         from ctmsn.scenarios.fast_smith.model import build_network as build_fast
         from ctmsn.scenarios.fast_smith.goal import build_goal as goal_fast
         from ctmsn.scenarios.fast_smith.constraints import build_conditions as conds_fast
-        register(ScenarioSpec("fast_smith", build_fast, None, goal_fast, conds_fast))
+        from ctmsn.scenarios.fast_smith.params import build_variables as vars_fast
+        register(ScenarioSpec("fast_smith", build_fast, None, goal_fast, conds_fast, variables=vars_fast))
     except Exception:
         pass

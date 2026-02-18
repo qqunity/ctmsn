@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { listScenarios, loadScenario, runScenario } from "@/lib/api";
+import { listScenarios, loadScenario, runScenario, renameWorkspace } from "@/lib/api";
 import { LoadResponse, ScenarioSpec, Equation } from "@/lib/types";
 import { ScenarioBar } from "@/components/ScenarioBar";
 import { GraphView } from "@/components/GraphView";
@@ -12,6 +12,7 @@ import { EquationsPanel } from "@/components/EquationsPanel";
 import { DetailsPanel } from "@/components/DetailsPanel";
 import { NetworkEditorPanel } from "@/components/NetworkEditorPanel";
 import { CommentPanel } from "@/components/CommentPanel";
+import { VariablesPanel } from "@/components/VariablesPanel";
 
 export default function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +27,10 @@ export default function WorkspacePage() {
   const [sessionId, setSessionId] = useState<string>(id);
   const [data, setData] = useState<LoadResponse | null>(null);
   const [selected, setSelected] = useState<any>(null);
+  const [wsName, setWsName] = useState<string>("");
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [pendingRequest, setPendingRequest] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
@@ -47,10 +52,20 @@ export default function WorkspacePage() {
           setSessionId(payload.session_id);
           setScenario(payload.scenario);
           setMode(payload.mode ?? "");
+          setWsName(payload.name ?? "");
         })
         .catch(() => {});
     }
   }, [id, user]);
+
+  useEffect(() => {
+    if (!pendingRequest) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [pendingRequest]);
 
   async function handleLoad() {
     const payload = await loadScenario({
@@ -60,6 +75,7 @@ export default function WorkspacePage() {
     });
     setSessionId(payload.session_id);
     setData(payload);
+    setWsName(payload.name ?? "");
     setSelected(null);
     router.replace(`/workspace/${payload.session_id}`);
   }
@@ -68,6 +84,7 @@ export default function WorkspacePage() {
     if (!sessionId) return;
     const payload = await runScenario({ session_id: sessionId, derive });
     setData(payload);
+    setWsName(payload.name ?? wsName);
   }
 
   function pickEq(eq: Equation) {
@@ -80,6 +97,20 @@ export default function WorkspacePage() {
     }
   }
 
+  const handleVariableUpdate = useCallback((resp: LoadResponse) => {
+    setData(resp);
+  }, []);
+
+  async function handleNameSave() {
+    if (!nameInput.trim() || nameInput.trim() === wsName) {
+      setEditingName(false);
+      return;
+    }
+    await renameWorkspace(sessionId, nameInput.trim());
+    setWsName(nameInput.trim());
+    setEditingName(false);
+  }
+
   if (authLoading || !user) return null;
 
   return (
@@ -88,8 +119,33 @@ export default function WorkspacePage() {
         <a href="/workspaces" className="text-sm text-blue-600 hover:underline mr-2">
           &larr; Назад
         </a>
-        <span className="text-sm text-gray-500">{user.username}</span>
+        {editingName ? (
+          <div className="flex items-center gap-1">
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleNameSave();
+                if (e.key === "Escape") setEditingName(false);
+              }}
+              className="border rounded px-2 py-0.5 text-sm"
+              autoFocus
+            />
+            <button onClick={handleNameSave} className="text-xs text-green-600 hover:underline">OK</button>
+            <button onClick={() => setEditingName(false)} className="text-xs text-gray-500 hover:underline">Отмена</button>
+          </div>
+        ) : (
+          <span
+            className="text-sm font-medium cursor-pointer hover:text-blue-600"
+            onClick={() => { setEditingName(true); setNameInput(wsName); }}
+            title="Нажмите для переименования"
+          >
+            {wsName || "Без имени"}
+          </span>
+        )}
         <div className="flex-1" />
+        <span className="text-sm text-gray-500">{user.username}</span>
         <button onClick={logout} className="text-sm text-red-600 hover:underline">
           Выйти
         </button>
@@ -116,6 +172,14 @@ export default function WorkspacePage() {
         <div className="w-[460px] shrink-0 overflow-auto border-l bg-white p-4">
           <div className="space-y-4">
             <StatusPanel data={data} />
+            {data?.variables && data.variables.length > 0 && (
+              <VariablesPanel
+                variables={data.variables}
+                context={data.context ?? {}}
+                sessionId={sessionId}
+                onUpdate={handleVariableUpdate}
+              />
+            )}
             {sessionId && (
               <NetworkEditorPanel
                 sessionId={sessionId}

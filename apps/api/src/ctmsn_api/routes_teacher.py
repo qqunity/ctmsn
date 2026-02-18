@@ -24,6 +24,7 @@ class StudentInfo(BaseModel):
 
 class WorkspaceInfo(BaseModel):
     id: str
+    name: str
     scenario: str
     mode: Optional[str]
     created_at: str
@@ -49,7 +50,7 @@ def list_students(
 ):
     rows = (
         db.query(User, func.count(Workspace.id))
-        .outerjoin(Workspace, Workspace.owner_id == User.id)
+        .outerjoin(Workspace, (Workspace.owner_id == User.id) & Workspace.is_deleted.is_(None))
         .filter(User.role == Role.student)
         .group_by(User.id)
         .all()
@@ -70,10 +71,15 @@ def student_workspaces(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    ws_list = db.query(Workspace).filter(Workspace.owner_id == student_id).order_by(Workspace.created_at.desc()).all()
+    ws_list = (
+        db.query(Workspace)
+        .filter(Workspace.owner_id == student_id, Workspace.is_deleted.is_(None))
+        .order_by(Workspace.created_at.desc())
+        .all()
+    )
     return [
         WorkspaceInfo(
-            id=w.id, scenario=w.scenario, mode=w.mode,
+            id=w.id, name=w.name, scenario=w.scenario, mode=w.mode,
             created_at=w.created_at.isoformat(), updated_at=w.updated_at.isoformat(),
         )
         for w in ws_list
@@ -86,20 +92,34 @@ def view_workspace(
     teacher: User = Depends(_teacher_dep),
     db: Session = Depends(get_db),
 ):
+    from ctmsn_api.ops import get_variable_info, run_ops
+    from ctmsn_api.registry import get as get_spec
     from ctmsn_api.serialize import serialize
-    from ctmsn_api.sessions import network_from_json
+    from ctmsn_api.sessions import context_from_json, network_from_json
 
     ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
     if not ws:
         raise HTTPException(status_code=404, detail="Workspace not found")
 
     net = network_from_json(ws.network_json)
+    spec = get_spec(ws.scenario)
+    ctx_values = context_from_json(ws.context_json, net)
+    variables = get_variable_info(spec, net, ws.mode)
+
+    ctx_display: dict = {}
+    from ctmsn.core.concept import Concept
+    for k, v in ctx_values.items():
+        ctx_display[k] = v.id if isinstance(v, Concept) else v
+
     return {
         "id": ws.id,
+        "name": ws.name,
         "scenario": ws.scenario,
         "mode": ws.mode,
         "owner_id": ws.owner_id,
         "graph": serialize(net),
+        "variables": variables,
+        "context": ctx_display,
     }
 
 

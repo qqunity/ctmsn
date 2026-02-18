@@ -1,4 +1,4 @@
-.PHONY: help install-api install-web install dev-api dev-web dev clean check-venv
+.PHONY: help install-api install-web install dev-api dev-web dev clean check-venv create-teacher
 
 help:
 	@echo "CTnSS Local UI - Development Commands"
@@ -49,6 +49,13 @@ dev: check-venv
 	@echo ""
 	@echo "Press Ctrl+C to stop all servers"
 	@make -j2 dev-api dev-web
+
+create-teacher: check-venv
+	@if [ -z "$(USERNAME)" ] || [ -z "$(PASSWORD)" ]; then \
+		echo "Usage: make create-teacher USERNAME=... PASSWORD=..."; \
+		exit 1; \
+	fi
+	cd apps/api && PYTHONPATH=../../src:src python3 -m ctmsn_api.cli create-teacher --username "$(USERNAME)" --password "$(PASSWORD)"
 
 clean:
 	@echo "Stopping dev servers..."

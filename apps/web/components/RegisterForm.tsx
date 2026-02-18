@@ -8,7 +8,6 @@ import { useAuth } from "./AuthProvider";
 export function RegisterForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"student" | "teacher">("student");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { refresh } = useAuth();
@@ -18,7 +17,7 @@ export function RegisterForm() {
     setError("");
     setLoading(true);
     try {
-      const res = await register(username, password, role);
+      const res = await register(username, password);
       setTokens(res.access_token, res.refresh_token);
       await refresh();
     } catch (err: any) {
@@ -48,17 +47,6 @@ export function RegisterForm() {
         className="block w-full border rounded px-3 py-2"
         required
       />
-      <div>
-        <label className="block text-sm font-medium mb-1">Роль</label>
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as "student" | "teacher")}
-          className="block w-full border rounded px-3 py-2"
-        >
-          <option value="student">Студент</option>
-          <option value="teacher">Преподаватель</option>
-        </select>
-      </div>
       <button
         type="submit"
         disabled={loading}

@@ -22,7 +22,6 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class RegisterReq(BaseModel):
     username: str
     password: str
-    role: Role = Role.student
 
 
 class LoginReq(BaseModel):
@@ -55,7 +54,7 @@ def register(req: RegisterReq, db: Session = Depends(get_db)):
     user = User(
         username=req.username,
         password_hash=hash_password(req.password),
-        role=req.role,
+        role=Role.student,
     )
     db.add(user)
     db.commit()

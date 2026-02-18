@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +11,7 @@ from sqlalchemy.orm import Session
 from ctmsn.core.concept import Concept
 from ctmsn.core.predicate import Predicate
 from ctmsn_api.auth import get_current_user
-from ctmsn_api.database import create_tables, get_db
+from ctmsn_api.database import create_tables, get_db, migrate_db
 from ctmsn_api.models import Comment, User, Workspace
 from ctmsn_api.ops import run_ops
 from ctmsn_api.registry import get as get_spec, init_registry, list_specs
@@ -19,9 +20,12 @@ from ctmsn_api.routes_teacher import router as teacher_router
 from ctmsn_api.serialize import serialize
 from ctmsn_api.sessions import (
     SessionState,
+    context_from_json,
+    context_to_json,
     create_workspace,
     get_session,
     network_from_json,
+    network_to_json,
     put_session,
 )
 
@@ -47,6 +51,19 @@ init_registry()
 @app.on_event("startup")
 def on_startup():
     create_tables()
+    migrate_db()
+
+
+def _count_user_workspaces(owner_id: str, scenario: str, db: Session) -> int:
+    return (
+        db.query(Workspace)
+        .filter(
+            Workspace.owner_id == owner_id,
+            Workspace.scenario == scenario,
+            Workspace.is_deleted.is_(None),
+        )
+        .count()
+    )
 
 
 def check_workspace_access(workspace_id: str, user: User, db: Session) -> Workspace:
@@ -63,10 +80,13 @@ def scenarios():
     return {"scenarios": list_specs()}
 
 
+# --- Session / Load ---
+
 class LoadReq(BaseModel):
     scenario: str
     mode: Optional[str] = None
     derive: bool = True
+    name: Optional[str] = None
 
 
 @app.post("/api/session/load")
@@ -78,17 +98,26 @@ def load(
     spec = get_spec(req.scenario)
     net = spec.build(mode=req.mode) if req.mode else spec.build()
 
-    workspace_id = create_workspace(user.id, req.scenario, req.mode, net, db)
+    if req.name:
+        ws_name = req.name
+    else:
+        n = _count_user_workspaces(user.id, req.scenario, db) + 1
+        ws_name = f"{req.scenario} #{n}"
+
+    workspace_id = create_workspace(user.id, req.scenario, req.mode, net, db, name=ws_name)
 
     ops = run_ops(net, spec, derive=req.derive, mode=req.mode)
     return {
         "session_id": workspace_id,
+        "name": ws_name,
         "scenario": req.scenario,
         "mode": req.mode,
         "graph": serialize(net),
         **ops,
     }
 
+
+# --- Run ---
 
 class RunReq(BaseModel):
     session_id: str
@@ -101,21 +130,92 @@ def run(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    check_workspace_access(req.session_id, user, db)
+    ws = check_workspace_access(req.session_id, user, db)
     st = get_session(req.session_id, db)
     if not st:
         return {"error": "unknown session"}
 
     spec = get_spec(st.scenario)
-    ops = run_ops(st.net, spec, derive=req.derive, mode=st.mode)
+    ops = run_ops(st.net, spec, derive=req.derive, mode=st.mode, context_values=st.context_values)
     return {
         "session_id": req.session_id,
+        "name": ws.name,
         "scenario": st.scenario,
         "mode": st.mode,
         "graph": serialize(st.net),
         **ops,
     }
 
+
+# --- Set Variable ---
+
+class SetVariableReq(BaseModel):
+    session_id: str
+    variable: str
+    value: str
+
+
+@app.post("/api/session/set_variable")
+def set_variable(
+    req: SetVariableReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = check_workspace_access(req.session_id, user, db)
+    st = get_session(req.session_id, db)
+    if not st:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    spec = get_spec(st.scenario)
+
+    # Resolve value: try concept first, then keep as string
+    resolved_value: Any = req.value
+    if req.value in st.net.concepts:
+        resolved_value = st.net.concepts[req.value]
+
+    # Validate via variables if available
+    if spec.variables:
+        import inspect
+        sig = inspect.signature(spec.variables)
+        params = list(sig.parameters.keys())
+        if len(params) >= 1:
+            variables_result = spec.variables(st.net)
+        else:
+            variables_result = spec.variables()
+
+        from ctmsn.param.variable import Variable
+        vars_obj = variables_result[0]
+        found = False
+        for attr_name in dir(vars_obj):
+            val = getattr(vars_obj, attr_name, None)
+            if isinstance(val, Variable) and val.name == req.variable:
+                if not val.domain.contains(resolved_value):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Value '{req.value}' not in domain of '{req.variable}': {val.domain.describe()}",
+                    )
+                found = True
+                break
+        if not found:
+            raise HTTPException(status_code=400, detail=f"Unknown variable '{req.variable}'")
+
+    ctx_values = dict(st.context_values)
+    ctx_values[req.variable] = resolved_value
+
+    put_session(req.session_id, st, db, context_values=ctx_values)
+
+    ops = run_ops(st.net, spec, derive=True, mode=st.mode, context_values=ctx_values)
+    return {
+        "session_id": req.session_id,
+        "name": ws.name,
+        "scenario": st.scenario,
+        "mode": st.mode,
+        "graph": serialize(st.net),
+        **ops,
+    }
+
+
+# --- Network editing ---
 
 class AddConceptReq(BaseModel):
     session_id: str
@@ -196,6 +296,8 @@ def add_fact(
         return {"error": str(e)}
 
 
+# --- Workspaces ---
+
 @app.get("/api/workspaces")
 def list_workspaces(
     user: User = Depends(get_current_user),
@@ -203,7 +305,7 @@ def list_workspaces(
 ):
     ws_list = (
         db.query(Workspace)
-        .filter(Workspace.owner_id == user.id)
+        .filter(Workspace.owner_id == user.id, Workspace.is_deleted.is_(None))
         .order_by(Workspace.created_at.desc())
         .all()
     )
@@ -211,6 +313,7 @@ def list_workspaces(
         "workspaces": [
             {
                 "id": w.id,
+                "name": w.name,
                 "scenario": w.scenario,
                 "mode": w.mode,
                 "created_at": w.created_at.isoformat(),
@@ -220,6 +323,108 @@ def list_workspaces(
         ]
     }
 
+
+class RenameReq(BaseModel):
+    name: str
+
+
+@app.patch("/api/workspaces/{workspace_id}")
+def rename_workspace(
+    workspace_id: str,
+    req: RenameReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = check_workspace_access(workspace_id, user, db)
+    ws.name = req.name
+    db.commit()
+    return {"ok": True, "id": ws.id, "name": ws.name}
+
+
+@app.delete("/api/workspaces/{workspace_id}")
+def delete_workspace(
+    workspace_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = check_workspace_access(workspace_id, user, db)
+    ws.is_deleted = datetime.now(timezone.utc)
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/workspaces/{workspace_id}/duplicate")
+def duplicate_workspace(
+    workspace_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = check_workspace_access(workspace_id, user, db)
+    new_name = f"{ws.name} (копия)" if ws.name else f"{ws.scenario} (копия)"
+    new_ws = Workspace(
+        owner_id=user.id,
+        scenario=ws.scenario,
+        mode=ws.mode,
+        name=new_name,
+        network_json=ws.network_json,
+        context_json=ws.context_json,
+    )
+    db.add(new_ws)
+    db.commit()
+    db.refresh(new_ws)
+    return {"id": new_ws.id, "name": new_ws.name}
+
+
+@app.get("/api/workspaces/{workspace_id}/export")
+def export_workspace(
+    workspace_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = check_workspace_access(workspace_id, user, db)
+    import json
+    return {
+        "scenario": ws.scenario,
+        "mode": ws.mode,
+        "name": ws.name,
+        "network": json.loads(ws.network_json),
+        "context": json.loads(ws.context_json),
+    }
+
+
+class ImportReq(BaseModel):
+    data: dict
+
+
+@app.post("/api/workspaces/import")
+def import_workspace(
+    req: ImportReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    import json
+    d = req.data
+    scenario = d.get("scenario", "")
+    mode = d.get("mode")
+    name = d.get("name", f"{scenario} (импорт)")
+    network_json = json.dumps(d.get("network", {}))
+    context_json = json.dumps(d.get("context", {}))
+
+    ws = Workspace(
+        owner_id=user.id,
+        scenario=scenario,
+        mode=mode,
+        name=name,
+        network_json=network_json,
+        context_json=context_json,
+    )
+    db.add(ws)
+    db.commit()
+    db.refresh(ws)
+    return {"id": ws.id, "name": ws.name}
+
+
+# --- Comments ---
 
 class AddCommentReq(BaseModel):
     text: str

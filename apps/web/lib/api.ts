@@ -66,11 +66,11 @@ export async function login(username: string, password: string): Promise<TokenRe
   return ensureOk(res);
 }
 
-export async function register(username: string, password: string, role: string): Promise<TokenResponse> {
+export async function register(username: string, password: string): Promise<TokenResponse> {
   const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password, role }),
+    body: JSON.stringify({ username, password }),
   });
   return ensureOk(res);
 }
@@ -92,6 +92,7 @@ export async function loadScenario(req: {
   scenario: string;
   mode?: string | null;
   derive?: boolean;
+  name?: string | null;
 }): Promise<LoadResponse> {
   const r = await authFetch(`${API_BASE}/api/session/load`, {
     method: "POST",
@@ -108,6 +109,15 @@ export async function runScenario(req: { session_id: string; derive?: boolean })
     body: JSON.stringify({ ...req, derive: req.derive ?? true }),
   });
   return (await r.json()) as LoadResponse;
+}
+
+export async function setVariable(sessionId: string, variable: string, value: string): Promise<LoadResponse> {
+  const r = await authFetch(`${API_BASE}/api/session/set_variable`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, variable, value }),
+  });
+  return ensureOk(r);
 }
 
 export async function addConcept(req: AddConceptRequest): Promise<NetworkEditResponse> {
@@ -142,6 +152,43 @@ export async function listWorkspaces(): Promise<WorkspaceInfo[]> {
   const r = await authFetch(`${API_BASE}/api/workspaces`);
   const j = await r.json();
   return j.workspaces as WorkspaceInfo[];
+}
+
+export async function renameWorkspace(id: string, name: string): Promise<{ ok: boolean; id: string; name: string }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  return ensureOk(r);
+}
+
+export async function deleteWorkspace(id: string): Promise<{ ok: boolean }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${id}`, {
+    method: "DELETE",
+  });
+  return ensureOk(r);
+}
+
+export async function duplicateWorkspace(id: string): Promise<{ id: string; name: string }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${id}/duplicate`, {
+    method: "POST",
+  });
+  return ensureOk(r);
+}
+
+export async function exportWorkspace(id: string): Promise<any> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${id}/export`);
+  return ensureOk(r);
+}
+
+export async function importWorkspace(data: any): Promise<{ id: string; name: string }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data }),
+  });
+  return ensureOk(r);
 }
 
 // Comments

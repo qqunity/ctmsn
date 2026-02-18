@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -18,6 +18,7 @@ class SessionState:
     scenario: str
     mode: Optional[str]
     net: SemanticNetwork
+    context_values: dict[str, Any] = field(default_factory=dict)
 
 
 def network_to_json(net: SemanticNetwork) -> str:
@@ -42,10 +43,41 @@ def network_from_json(data: str) -> SemanticNetwork:
 
     for fdata in raw.get("facts", []):
         pred_name = fdata["predicate"]
-        args = tuple(net.concepts[a] for a in fdata["args"])
+        args = tuple(net.concepts[a] if a in net.concepts else a for a in fdata["args"])
         net.assert_fact(pred_name, args)
 
     return net
+
+
+def context_to_json(ctx_values: dict[str, Any], net: SemanticNetwork) -> str:
+    serialized: dict[str, Any] = {}
+    for key, val in ctx_values.items():
+        if isinstance(val, Concept):
+            serialized[key] = {"__concept__": val.id}
+        else:
+            serialized[key] = val
+    return json.dumps(serialized)
+
+
+def context_from_json(data: str, net: SemanticNetwork) -> dict[str, Any]:
+    if not data or data == "{}":
+        return {}
+    try:
+        raw = json.loads(data)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    result: dict[str, Any] = {}
+    for key, val in raw.items():
+        try:
+            if isinstance(val, dict) and "__concept__" in val:
+                cid = val["__concept__"]
+                if cid in net.concepts:
+                    result[key] = net.concepts[cid]
+            else:
+                result[key] = val
+        except Exception:
+            pass
+    return result
 
 
 def get_session(workspace_id: str, db: Session) -> Optional[SessionState]:
@@ -53,24 +85,43 @@ def get_session(workspace_id: str, db: Session) -> Optional[SessionState]:
     if not ws:
         return None
     net = network_from_json(ws.network_json)
-    return SessionState(scenario=ws.scenario, mode=ws.mode, net=net)
+    ctx_values = context_from_json(ws.context_json, net)
+    return SessionState(scenario=ws.scenario, mode=ws.mode, net=net, context_values=ctx_values)
 
 
-def put_session(workspace_id: str, st: SessionState, db: Session) -> None:
+def put_session(
+    workspace_id: str,
+    st: SessionState,
+    db: Session,
+    context_values: dict[str, Any] | None = None,
+) -> None:
     ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
     if ws:
         ws.network_json = network_to_json(st.net)
         ws.scenario = st.scenario
         ws.mode = st.mode
+        if context_values is not None:
+            ws.context_json = context_to_json(context_values, st.net)
         db.commit()
 
 
-def create_workspace(owner_id: str, scenario: str, mode: str | None, net: SemanticNetwork, db: Session) -> str:
+def create_workspace(
+    owner_id: str,
+    scenario: str,
+    mode: str | None,
+    net: SemanticNetwork,
+    db: Session,
+    name: str = "",
+    context_values: dict[str, Any] | None = None,
+) -> str:
+    ctx_json = context_to_json(context_values or {}, net)
     ws = Workspace(
         owner_id=owner_id,
         scenario=scenario,
         mode=mode,
+        name=name,
         network_json=network_to_json(net),
+        context_json=ctx_json,
     )
     db.add(ws)
     db.commit()

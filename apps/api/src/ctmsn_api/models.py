@@ -43,7 +43,10 @@ class Workspace(Base):
     owner_id = Column(String(32), ForeignKey("users.id"), nullable=False, index=True)
     scenario = Column(String(150), nullable=False)
     mode = Column(String(150), nullable=True)
+    name = Column(String(255), nullable=False, default="")
     network_json = Column(Text, nullable=False, default="{}")
+    context_json = Column(Text, nullable=False, default="{}")
+    is_deleted = Column(DateTime(timezone=True), nullable=True, default=None)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 

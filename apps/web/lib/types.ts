@@ -17,8 +17,18 @@ export type GraphPayload = {
   predicates: Predicate[];
 };
 
+export type VariableInfo = {
+  name: string;
+  type_tag: string | null;
+  domain_type: "enum" | "range" | "predicate";
+  values?: string[];
+  min?: number;
+  max?: number;
+};
+
 export type LoadResponse = {
   session_id: string;
+  name?: string;
   scenario: string;
   mode: string | null;
   graph: GraphPayload;
@@ -26,6 +36,8 @@ export type LoadResponse = {
   check: string | null;
   forces: string | null;
   force: string | null;
+  variables?: VariableInfo[] | null;
+  context?: Record<string, any>;
 };
 
 export type AddConceptRequest = {
@@ -68,6 +80,7 @@ export type TokenResponse = {
 
 export type WorkspaceInfo = {
   id: string;
+  name: string;
   scenario: string;
   mode: string | null;
   created_at: string;
