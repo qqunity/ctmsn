@@ -135,7 +135,7 @@ export function WorkspaceList() {
                   )}
                 </a>
                 <span className="text-xs text-gray-400 ml-2 shrink-0">
-                  {new Date(w.created_at).toLocaleString("ru")}
+                  {new Date(w.updated_at).toLocaleString("ru")}
                 </span>
               </div>
               <div className="flex gap-2 mt-1">

@@ -306,7 +306,7 @@ def list_workspaces(
     ws_list = (
         db.query(Workspace)
         .filter(Workspace.owner_id == user.id, Workspace.is_deleted.is_(None))
-        .order_by(Workspace.created_at.desc())
+        .order_by(Workspace.updated_at.desc())
         .all()
     )
     return {
