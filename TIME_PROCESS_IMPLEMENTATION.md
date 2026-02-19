@@ -1,6 +1,6 @@
 # Реализация сценария "Процесс во времени"
 
-> **Навигация:** [🏠 Главная](README.md) | [← Scenarios](src/ctmsn/scenarios/README.md) | [Scenario README](src/ctmsn/scenarios/time_process/README.md)
+> **Навигация:** [🏠 Главная](README.md) | [← Сценарии](src/ctmsn/scenarios/README.md) | **Вы здесь: Time Process** | [Scenario README →](src/ctmsn/scenarios/time_process/README.md)
 
 ## 📖 Содержание
 
@@ -330,4 +330,4 @@ python3 tests/scenarios/test_time_process_goals.py
 
 ---
 
-> **Навигация:** [🏠 Главная](README.md) | [Scenarios](src/ctmsn/scenarios/README.md) | [Fast Smith](FAST_SMITH_IMPLEMENTATION.md)
+> **Навигация:** [🏠 Главная](README.md) | [← Сценарии](src/ctmsn/scenarios/README.md) | **Вы здесь: Time Process** | [Fast Smith →](FAST_SMITH_IMPLEMENTATION.md)

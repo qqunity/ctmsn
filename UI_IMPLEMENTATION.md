@@ -1,17 +1,25 @@
 # UI Implementation
 
-> **Навигация:** [🏠 Главная](README.md) | **Вы здесь**
+> **Навигация:** [🏠 Главная](README.md) | **Вы здесь: UI Implementation** | [apps/api/README.md →](apps/api/README.md)
 
-Локальный веб-интерфейс для визуализации и работы с семантическими сетями CTnSS.
+Локальный UI включает backend на FastAPI и frontend на Next.js для интерактивной работы с семантическими сетями, контекстами, формулами и форсингом.
+
+## 📖 Содержание
+- [Архитектура](#архитектура)
+- [Запуск](#запуск)
+- [Функциональные блоки UI](#функциональные-блоки-ui)
+- [API-контур](#api-контур)
+- [Структура приложений](#структура-приложений)
+- [Тестирование](#тестирование)
+- [Troubleshooting](#troubleshooting)
 
 ## Архитектура
 
-Монорепо с двумя приложениями:
+- `apps/api` — FastAPI API, хранение workspace-состояний, auth, teacher-функции
+- `apps/web` — Next.js клиент, графовая визуализация, редакторы сущностей, формул, переменных и контекстов
+- `src/ctmsn` — библиотечное ядро (сценарии, логика, форсинг)
 
-- `apps/api` — FastAPI backend (Python 3.9+)
-- `apps/web` — Next.js frontend (TypeScript + React + Tailwind)
-
-## Быстрый старт
+## Запуск
 
 ```bash
 source venv/bin/activate
@@ -19,235 +27,120 @@ make install
 make dev
 ```
 
-Откройте браузер: `http://localhost:3000`
+Адреса:
+- Web: `http://localhost:3000`
+- API: `http://127.0.0.1:8000`
 
-### Альтернативные способы запуска
+Раздельный запуск:
 
-Shell-скрипт:
 ```bash
 source venv/bin/activate
-cd apps
-./run_dev.sh
+make dev-api
+make dev-web
 ```
 
-Раздельный запуск (два терминала):
+## Функциональные блоки UI
 
-Терминал 1 (API):
-```bash
-source venv/bin/activate
-cd apps/api
-python -m pip install -r requirements.txt
-PYTHONPATH=../../src python -m uvicorn ctmsn_api.app:app --reload --host 127.0.0.1 --port 8000
-```
+### Аутентификация и роли
+- Регистрация/вход пользователя
+- Обновление токена
+- Роль преподавателя (`teacher`) с доступом к студенческим workspace
 
-Терминал 2 (Web):
-```bash
-cd apps/web
-npm install
-npm run dev
-```
+### Рабочие пространства
+- Создание из сценария или «чистого листа»
+- Переименование, дублирование, удаление
+- Экспорт/импорт
+- История изменений (`undo/redo`)
 
-## Работа с UI
+### Редакторы
+- Граф: концепты, предикаты, факты
+- Формулы: CRUD и вычисление
+- Переменные: CRUD и домены
+- Контексты: CRUD, активация, сравнение, highlights
+- Панель forcing: `check`, `forces`, `force`
 
-### Основные действия
+### Визуализация
+- Граф на Cytoscape
+- Панели статуса, деталей, формул, переменных и контекстов
+- Help panel и teacher panel
 
-1. Выберите сценарий из выпадающего списка
-2. Выберите режим (если доступно)
-3. Включите/выключите деривацию (derive)
-4. Нажмите **Load** для загрузки сценария
-5. Нажмите **Run** для запуска операций
+## API-контур
 
-### Интерактивные возможности
+Ключевые endpoint-группы:
 
-- Кликните на узел/ребро графа для просмотра деталей
-- Кликните на равенство в панели Equations для просмотра деталей
-- Панель Status показывает результаты check/forces/force
+- `/api/auth/*` — аутентификация
+- `/api/scenarios`, `/api/session/load`, `/api/run` — сценарии и запуск
+- `/api/session/*` — изменение сети и истории
+- `/api/workspaces*` — управление workspace
+- `/api/workspaces/{wid}/formulas*` — редактор формул
+- `/api/workspaces/{wid}/variables*` — редактор переменных
+- `/api/workspaces/{wid}/contexts*` — редактор контекстов
+- `/api/workspaces/{wid}/forcing/*` — forcing API
+- `/api/teacher/*` — teacher API
 
-### Цвета на графе
+## Структура приложений
 
-- Синие узлы — концепты
-- Серые сплошные стрелки — базовые рёбра (edge)
-- Оранжевые пунктирные стрелки — выведенные рёбра (derived_edge)
-
-## API Endpoints
-
-### GET /api/scenarios
-
-Список доступных сценариев и их режимов.
-
-```json
-{
-  "scenarios": [
-    { "name": "fishing", "modes": [] },
-    { "name": "time_process", "modes": ["sun", "prereq"] }
-  ]
-}
-```
-
-### POST /api/session/new
-
-Создать новую сессию.
-
-```json
-{ "session_id": "abc123..." }
-```
-
-### POST /api/session/load
-
-Загрузить сценарий в сессию.
-
-**Request:**
-```json
-{
-  "session_id": "abc123",
-  "scenario": "fishing",
-  "mode": null,
-  "derive": true
-}
-```
-
-**Response:**
-```json
-{
-  "session_id": "string",
-  "scenario": "string",
-  "mode": "string | null",
-  "graph": {
-    "nodes": [{ "id": "string", "label": "string" }],
-    "edges": [{ "id": "string", "label": "string", "source": "string", "target": "string", "kind": "edge|derived" }],
-    "equations": [
-      { "kind": "comp2", "left": "string", "right": "string", "result": "string" }
-    ]
-  },
-  "check": "string",
-  "forces": "string",
-  "force": "string"
-}
-```
-
-### POST /api/run
-
-Запустить операции на текущей сессии.
-
-**Request:**
-```json
-{
-  "session_id": "abc123",
-  "derive": true
-}
-```
-
-**Response:** аналогично `/api/session/load`
-
-## Структура файлов
-
-```
+```text
 apps/
 ├── api/
-│   ├── src/ctmsn_api/
-│   │   ├── app.py           # FastAPI приложение
-│   │   ├── registry.py      # Регистрация сценариев
-│   │   ├── sessions.py      # Управление сессиями
-│   │   ├── serialize.py     # Сериализация графа
-│   │   └── ops.py           # Операции check/forces/force
-│   └── requirements.txt
-│
+│   └── src/ctmsn_api/
+│       ├── app.py
+│       ├── routes_auth.py
+│       ├── routes_editors.py
+│       ├── routes_teacher.py
+│       ├── sessions.py
+│       ├── registry.py
+│       ├── ops.py
+│       └── serialize.py
 └── web/
     ├── app/
-    │   ├── page.tsx         # Главная страница
-    │   ├── layout.tsx
-    │   └── globals.css
+    │   ├── login/page.tsx
+    │   ├── register/page.tsx
+    │   ├── workspaces/page.tsx
+    │   ├── workspace/[id]/page.tsx
+    │   └── teacher/
     ├── components/
-    │   ├── ScenarioBar.tsx  # Панель управления
-    │   ├── GraphView.tsx    # Граф (Cytoscape)
-    │   ├── StatusPanel.tsx  # Статус операций
-    │   ├── EquationsPanel.tsx
-    │   └── DetailsPanel.tsx
-    ├── lib/
-    │   ├── api.ts           # API клиент
-    │   └── types.ts
-    └── package.json
+    └── lib/
 ```
 
-## Добавление нового сценария
+## Тестирование
 
-1. Создайте сценарий в `src/ctmsn/scenarios/your_scenario/`
-2. Добавьте регистрацию в `apps/api/src/ctmsn_api/registry.py`:
+UI покрывается e2e-набором:
 
-```python
-try:
-    from ctmsn.scenarios.your_scenario.model import build_network
-    from ctmsn.scenarios.your_scenario.derive import apply
-    from ctmsn.scenarios.your_scenario.goal import build_goal
-    from ctmsn.scenarios.your_scenario.constraints import build_conditions
-    register(ScenarioSpec("your_scenario", build_network, apply, build_goal, build_conditions))
-except Exception:
-    pass
+```bash
+source venv/bin/activate
+make test-e2e
 ```
 
-3. Перезапустите API сервер
+Примеры:
+- `tests/e2e_auth.py`
+- `tests/e2e_workspace_mgmt.py`
+- `tests/e2e_network_editor.py`
+- `tests/e2e_forcing.py`
+- `tests/e2e_editors.py`
+- `tests/e2e_help_panel.py`
+- `tests/e2e_teacher.py`
 
 ## Troubleshooting
 
-### Ошибка: "Module not found: ctmsn"
+### API не поднимается
+- активировать `venv`
+- проверить установку зависимостей `make install-api`
+- убедиться, что порт `8000` свободен
 
-Убедитесь, что PYTHONPATH указывает на `src` и venv активирован:
+### Web не поднимается
+- выполнить `make install-web`
+- проверить, что `npm` доступен
+- убедиться, что порт `3000` свободен
 
-```bash
-source venv/bin/activate
-export PYTHONPATH=$(pwd)/src
-```
-
-### Ошибка: "pip: command not found"
-
-Активируйте venv:
-
-```bash
-source venv/bin/activate
-make install-api
-```
-
-### Ошибка: "Port 8000 already in use"
-
-Остановите процесс:
-
-```bash
-make clean
-```
-
-Или:
-
-```bash
-lsof -ti:8000 | xargs kill -9
-```
-
-### Граф не отображается
-
-1. Откройте консоль браузера (F12)
-2. Проверьте, что API отвечает:
-   ```bash
-   curl http://127.0.0.1:8000/api/scenarios
-   ```
-3. Убедитесь, что сценарий загружен (панель Status должна показывать данные)
-
-## Технологии
-
-**Backend:**
-- Python 3.9+
-- FastAPI
-- Uvicorn
-- CTnSS (локальный пакет)
-
-**Frontend:**
-- Next.js 15
-- React 19
-- TypeScript 5
-- Tailwind CSS 3
-- Cytoscape.js
+### UI не видит API
+- проверить `NEXT_PUBLIC_API_BASE` в `apps/web/.env.local`
+- проверить `GET /api/scenarios` на `127.0.0.1:8000`
 
 ---
 
 > **См. также:**
-> - [README.md](README.md) — главная документация
-> - [USAGE.md](USAGE.md) — руководство пользователя
-> - [scenarios/README.md](src/ctmsn/scenarios/README.md) — создание сценариев
+> - [README.md](README.md)
+> - [apps/api/README.md](apps/api/README.md)
+> - [apps/web/README.md](apps/web/README.md)
+> - [USAGE.md](USAGE.md)

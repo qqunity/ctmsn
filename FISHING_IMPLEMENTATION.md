@@ -1,6 +1,6 @@
 # Fishing (4.14) — Реализация
 
-> **Навигация:** [🏠 Главная](README.md) | [← Time Process](TIME_PROCESS_IMPLEMENTATION.md) | **Вы здесь** | [Usage →](USAGE.md)
+> **Навигация:** [🏠 Главная](README.md) | [← Time Process](TIME_PROCESS_IMPLEMENTATION.md) | **Вы здесь: Fishing** | [Руководство пользователя →](USAGE.md)
 
 ## 📖 Содержание
 
@@ -463,4 +463,4 @@ def test_forces_goal():
 
 ---
 
-> **Навигация:** [🏠 Главная](README.md) | [← Time Process](TIME_PROCESS_IMPLEMENTATION.md) | **Вы здесь** | [Usage →](USAGE.md)
+> **Навигация:** [🏠 Главная](README.md) | [← Time Process](TIME_PROCESS_IMPLEMENTATION.md) | **Вы здесь: Fishing** | [Руководство пользователя →](USAGE.md)

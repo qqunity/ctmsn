@@ -124,7 +124,7 @@ README.md                # Обновлён с описанием сценари
 ### Выполнение демонстрации
 
 ```bash
-$ python src/ctmsn/examples/fast_smith_demo.py
+$ python3 src/ctmsn/examples/fast_smith_demo.py
 
 Initial ctx: {'x': Concept(id='A', label='Smith (A)', ...), 'label': 'h'}
 Check ok: True
@@ -144,7 +144,7 @@ force(phi): true | Already forced
 ### Тесты
 
 ```bash
-$ python tests/test_fast_smith.py
+$ python3 tests/test_fast_smith.py
 
 All Fast Smith tests passed!
 ```

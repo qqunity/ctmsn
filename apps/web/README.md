@@ -1,4 +1,4 @@
-# CTnSS Web UI
+# CTMSN Web UI
 
 Next.js frontend для локального UI.
 
@@ -16,14 +16,28 @@ cd apps/web
 npm run dev
 ```
 
-UI будет доступен на `http://localhost:3000`
+Клиент: `http://localhost:3000`
 
-## Переменные окружения
+## API endpoint
 
-По умолчанию используется `http://127.0.0.1:8000` для API.
+По умолчанию frontend использует `http://127.0.0.1:8000`.
 
-Если нужно изменить, создайте файл `.env.local`:
+Для переопределения создайте `.env.local`:
 
 ```bash
-echo "NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000" > .env.local
+NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000
+```
+
+## Основные экраны
+
+- Авторизация: `/login`, `/register`
+- Список рабочих пространств: `/workspaces`
+- Рабочее пространство: `/workspace/[id]`
+- Teacher: `/teacher`, `/teacher/student/[id]`
+
+## Через Makefile (из корня репозитория)
+
+```bash
+make install-web
+make dev-web
 ```

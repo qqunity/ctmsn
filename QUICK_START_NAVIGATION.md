@@ -1,111 +1,39 @@
-# 🚀 Быстрый старт: Навигация по документации
+# Быстрый старт по документации
 
-## Вы здесь: ctmsn/
+Точка входа: [README.md](README.md)
 
-**Главный вход →** [README.md](README.md)
+## Короткие маршруты
 
----
+### Ядро библиотеки
+`README.md` → `USAGE.md` → `FORCING_IMPLEMENTATION.md`
 
-## ⚡ Быстрый выбор пути
+### Сценарии
+`USAGE.md` → `src/ctmsn/scenarios/README.md` → `src/ctmsn/scenarios/*/README.md`
 
-### 1️⃣ Новичок — изучение основ
+### Локальный UI
+`README.md` → `apps/api/README.md` + `apps/web/README.md` → `tests/e2e_*.py`
 
-```
-START → README.md → USAGE.md → examples/ → практика
-```
+## Основные документы
 
-**[🎓 Начать путь новичка](README.md#путь-новичка)**
+- [README.md](README.md)
+- [USAGE.md](USAGE.md)
+- [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md)
+- [src/ctmsn/scenarios/README.md](src/ctmsn/scenarios/README.md)
+- [NAVIGATION.md](NAVIGATION.md)
+- [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)
 
----
-
-### 2️⃣ Разработчик — создание сценариев
-
-```
-START → USAGE.md → FORCING_IMPLEMENTATION.md → FAST_SMITH_IMPLEMENTATION.md → создать свой
-```
-
-**[🔧 Начать путь разработчика](README.md#путь-разработчика)**
-
----
-
-### 3️⃣ Исследователь — архитектура
-
-```
-START → FORCING_IMPLEMENTATION.md → исходный код → DOCUMENTATION_SUMMARY.md
-```
-
-**[🔬 Начать путь исследователя](README.md#путь-исследователя)**
-
----
-
-## 🗺️ Визуальная карта всей документации
-
-**[Открыть полную карту](NAVIGATION.md)** — графы, схемы, детальные маршруты
-
----
-
-## 📚 Все документы
-
-| # | Документ | Описание |
-|---|----------|----------|
-| 1 | [README.md](README.md) | 🏠 Главная (НАЧНИТЕ ЗДЕСЬ) |
-| 2 | [NAVIGATION.md](NAVIGATION.md) | 🗺️ Карта навигации |
-| 3 | [USAGE.md](USAGE.md) | 📘 Руководство пользователя |
-| 4 | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md) | ⚙️ Архитектура форсинга |
-| 5 | [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md) | 🎯 Пример реализации |
-| 6 | [scenarios/README.md](src/ctmsn/scenarios/README.md) | 📚 Создание сценариев |
-| 7 | [scenarios/fast_smith/README.md](src/ctmsn/scenarios/fast_smith/README.md) | 🎓 Fast Smith задача |
-| 8 | [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md) | 📊 Сводка документации |
-| 9 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | 📋 История изменений |
-
----
-
-## 🎯 Что мне нужно?
-
-### "Хочу быстро начать"
-→ [README.md](README.md#быстрый-старт)
-
-### "Хочу понять форсинг"
-→ [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md#ключевые-концепции)
-
-### "Хочу увидеть пример"
-→ [FAST_SMITH_IMPLEMENTATION.md](FAST_SMITH_IMPLEMENTATION.md)
-
-### "Хочу создать свой сценарий"
-→ [scenarios/README.md](src/ctmsn/scenarios/README.md#создание-нового-сценария)
-
-### "Хочу увидеть полную картину"
-→ [NAVIGATION.md](NAVIGATION.md) + [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)
-
----
-
-## 💡 Советы
-
-1. **Начните с** [README.md](README.md) — там всё объяснено
-2. **Заблудились?** Нажмите 🏠 в любом документе
-3. **Нужна карта?** Откройте [NAVIGATION.md](NAVIGATION.md)
-4. **Хотите детали?** Следуйте ссылкам "Следующее →"
-
----
-
-## ⚡ Запуск примеров
+## Команды для быстрой проверки
 
 ```bash
-# Минимальный пример
 python3 src/ctmsn/examples/hello_forcing.py
-
-# Fast Smith демонстрация
-python3 src/ctmsn/examples/fast_smith_demo.py
-
-# Тесты
 python3 tests/test_smoke_imports.py
 python3 tests/test_fast_smith.py
 ```
 
----
+Для UI:
 
-<div align="center">
-
-**[🏠 Перейти на главную](README.md)** | **[🗺️ Открыть карту](NAVIGATION.md)**
-
-</div>
+```bash
+source venv/bin/activate
+make install
+make dev
+```
