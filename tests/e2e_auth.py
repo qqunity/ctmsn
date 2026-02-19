@@ -63,7 +63,9 @@ def test_unauthorized_access_workspaces(page):
 
     # Clear auth by going to a clean state
     page.context.clear_cookies()
-    page.evaluate("localStorage.clear()")
+    # Navigate first so we have a valid origin before accessing localStorage
+    goto_with_retry(page, BASE_URL)
+    page.evaluate("try { localStorage.clear() } catch(e) {}")
     page.wait_for_timeout(500)
 
     goto_with_retry(page, f"{BASE_URL}/workspaces")
@@ -84,7 +86,9 @@ def test_unauthorized_access_workspace(page):
     print("TEST: Unauthorized access to /workspace/:id")
 
     page.context.clear_cookies()
-    page.evaluate("localStorage.clear()")
+    # Navigate first so we have a valid origin before accessing localStorage
+    goto_with_retry(page, BASE_URL)
+    page.evaluate("try { localStorage.clear() } catch(e) {}")
     page.wait_for_timeout(500)
 
     goto_with_retry(page, f"{BASE_URL}/workspace/fake-id-123")

@@ -1,4 +1,4 @@
-.PHONY: help install-api install-web install dev-api dev-web dev clean check-venv create-teacher
+.PHONY: help install-api install-web install dev-api dev-web dev clean check-venv create-teacher test-e2e
 
 help:
 	@echo "CTnSS Local UI - Development Commands"
@@ -15,6 +15,8 @@ help:
 	@echo "make dev-web      - Запустить только Web сервер"
 	@echo ""
 	@echo "make clean        - Остановить все dev-серверы"
+	@echo ""
+	@echo "make test-e2e     - Запустить все e2e UI тесты"
 
 check-venv:
 	@if [ -z "$$VIRTUAL_ENV" ]; then \
@@ -56,6 +58,10 @@ create-teacher: check-venv
 		exit 1; \
 	fi
 	cd apps/api && PYTHONPATH=../../src:src python3 -m ctmsn_api.cli create-teacher --username "$(USERNAME)" --password "$(PASSWORD)"
+
+test-e2e: check-venv
+	@echo "Running all e2e UI tests..."
+	PYTHONPATH=src ./venv/bin/python3 -m pytest tests/e2e_*.py -v
 
 clean:
 	@echo "Stopping dev servers..."
