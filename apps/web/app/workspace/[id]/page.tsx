@@ -18,6 +18,9 @@ import { FormulaEditorPanel } from "@/components/FormulaEditorPanel";
 import { ForcingPanel } from "@/components/ForcingPanel";
 import { GraphLegend } from "@/components/GraphLegend";
 import { LayoutSelector } from "@/components/LayoutSelector";
+import { Tooltip } from "@/components/Tooltip";
+import { HelpPanel } from "@/components/HelpPanel";
+import { TOOLTIPS } from "@/lib/helpContent";
 
 export default function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +48,7 @@ export default function WorkspacePage() {
   const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ can_undo: false, can_redo: false, undo_count: 0, redo_count: 0 });
   const [graphLayout, setGraphLayout] = useState("cose");
   const [eqHighlights, setEqHighlights] = useState<ContextHighlights | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const graphRef = useRef<GraphViewHandle>(null);
 
   useEffect(() => {
@@ -303,47 +307,60 @@ export default function WorkspacePage() {
           </span>
         )}
         <div className="flex items-center gap-1 ml-4">
-          <button
-            onClick={handleUndo}
-            disabled={!historyStatus.can_undo}
-            className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
-            title="Отменить (Ctrl+Z)"
-          >
-            &#x21A9;
-          </button>
-          <button
-            onClick={handleRedo}
-            disabled={!historyStatus.can_redo}
-            className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
-            title="Повторить (Ctrl+Shift+Z)"
-          >
-            &#x21AA;
-          </button>
+          <Tooltip text={TOOLTIPS.undo} position="bottom">
+            <button
+              onClick={handleUndo}
+              disabled={!historyStatus.can_undo}
+              className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
+            >
+              &#x21A9;
+            </button>
+          </Tooltip>
+          <Tooltip text={TOOLTIPS.redo} position="bottom">
+            <button
+              onClick={handleRedo}
+              disabled={!historyStatus.can_redo}
+              className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
+            >
+              &#x21AA;
+            </button>
+          </Tooltip>
           <LayoutSelector value={graphLayout} onChange={setGraphLayout} />
         </div>
         <div className="flex items-center gap-1 ml-2">
-          <button
-            onClick={handleExportJson}
-            className="rounded px-2 py-1 text-xs hover:bg-gray-100"
-            title="Экспорт JSON"
-          >
-            &#x1F4E5; JSON
-          </button>
-          <button
-            onClick={handleImportJson}
-            className="rounded px-2 py-1 text-xs hover:bg-gray-100"
-            title="Импорт JSON"
-          >
-            &#x1F4E4; JSON
-          </button>
-          <button
-            onClick={handleExportPng}
-            className="rounded px-2 py-1 text-xs hover:bg-gray-100"
-            title="Скриншот графа (PNG)"
-          >
-            &#x1F4F7; PNG
-          </button>
+          <Tooltip text={TOOLTIPS.exportJson} position="bottom">
+            <button
+              onClick={handleExportJson}
+              className="rounded px-2 py-1 text-xs hover:bg-gray-100"
+            >
+              &#x1F4E5; JSON
+            </button>
+          </Tooltip>
+          <Tooltip text={TOOLTIPS.importJson} position="bottom">
+            <button
+              onClick={handleImportJson}
+              className="rounded px-2 py-1 text-xs hover:bg-gray-100"
+            >
+              &#x1F4E4; JSON
+            </button>
+          </Tooltip>
+          <Tooltip text={TOOLTIPS.exportPng} position="bottom">
+            <button
+              onClick={handleExportPng}
+              className="rounded px-2 py-1 text-xs hover:bg-gray-100"
+            >
+              &#x1F4F7; PNG
+            </button>
+          </Tooltip>
         </div>
+        <Tooltip text={TOOLTIPS.help} position="bottom">
+          <button
+            onClick={() => setHelpOpen(true)}
+            className="rounded px-2 py-1 text-sm font-bold text-blue-600 hover:bg-blue-50 border border-blue-200"
+          >
+            ?
+          </button>
+        </Tooltip>
         <div className="flex-1" />
         <span className="text-sm text-gray-500">{user.username}</span>
         <button onClick={logout} className="text-sm text-red-600 hover:underline">
@@ -428,6 +445,7 @@ export default function WorkspacePage() {
           </div>
         </div>
       </div>
+      <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
