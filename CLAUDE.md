@@ -62,3 +62,4 @@ The system follows a consistent flow: **Network → Variables → Constraints �
 - **Documentation language is Russian** (README, implementation docs, cursorrules). Code and identifiers are English.
 - Documentation style is formal/technical — no emotional expressions, no time estimates, no line-count statistics.
 - **After every code edit in `apps/web/` or `apps/api/`**, run the `webapp-testing` skill to verify the changes work correctly in the browser.
+- **After each completed feature**, save the written autotest (Playwright script) into `src/tests/` so it can be reused for regression testing.

@@ -170,6 +170,10 @@ for m in console_msgs:
 - Add appropriate waits: `page.wait_for_selector()` or `page.wait_for_timeout()`
 - Wrap each test case in try/except with screenshots — failed tests should always leave a screenshot for debugging
 
+## Saving Tests
+
+After each completed feature, **save the Playwright autotest script into `src/tests/`**. This ensures all e2e tests are collected in one place for regression testing. Name files descriptively, e.g. `e2e_login_flow.py`, `e2e_graph_visualization.py`.
+
 ## Reference Files
 
 - **examples/** - Examples showing common patterns:
