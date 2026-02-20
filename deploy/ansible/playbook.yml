@@ -1,0 +1,201 @@
+---
+# CTMSN Deployment Playbook for Ubuntu 24.04
+#
+# Usage:
+#   ansible-playbook -i deploy/ansible/inventory.yml deploy/ansible/playbook.yml
+#
+# First deploy (with SSL cert):
+#   ansible-playbook -i deploy/ansible/inventory.yml deploy/ansible/playbook.yml --tags all,certbot-init
+#
+# Redeploy (code update only):
+#   ansible-playbook -i deploy/ansible/inventory.yml deploy/ansible/playbook.yml --tags deploy
+
+- name: Deploy CTMSN
+  hosts: ctmsn
+  become: true
+
+  vars:
+    app_dir: /opt/ctmsn
+    compose_project: ctmsn
+
+  tasks:
+    # ── Docker ────────────────────────────────────────────────
+    - name: Install prerequisites
+      apt:
+        name: [ca-certificates, curl, gnupg]
+        state: present
+        update_cache: true
+      tags: [docker]
+
+    - name: Add Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+      tags: [docker]
+
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ ansible_architecture | regex_replace('x86_64', 'amd64') | regex_replace('aarch64', 'arm64') }}
+          signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/ubuntu
+          {{ ansible_distribution_release }} stable
+        filename: docker
+        state: present
+      tags: [docker]
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+      tags: [docker]
+
+    - name: Ensure Docker is running
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+      tags: [docker]
+
+    # ── Project files ─────────────────────────────────────────
+    - name: Create app directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: "0755"
+      tags: [deploy]
+
+    - name: Sync project files to server
+      ansible.posix.synchronize:
+        src: "{{ playbook_dir }}/../../"
+        dest: "{{ app_dir }}/"
+        delete: true
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=node_modules"
+          - "--exclude=venv"
+          - "--exclude=__pycache__"
+          - "--exclude=.next"
+          - "--exclude=*.db"
+          - "--exclude=.env"
+      tags: [deploy]
+
+    # ── Configuration ─────────────────────────────────────────
+    - name: Generate secret key
+      ansible.builtin.set_fact:
+        ctmsn_secret_key: "{{ lookup('password', '/dev/null length=64 chars=hexdigits') | lower }}"
+      when: ctmsn_secret_key is not defined
+      tags: [config]
+
+    - name: Template .env file
+      template:
+        src: templates/env.j2
+        dest: "{{ app_dir }}/.env"
+        mode: "0600"
+        force: false  # don't overwrite if exists (preserves secret key)
+      tags: [config]
+
+    - name: Template nginx.conf
+      template:
+        src: templates/nginx.conf.j2
+        dest: "{{ app_dir }}/deploy/nginx.conf"
+        mode: "0644"
+      notify: restart nginx
+      tags: [config, deploy]
+
+    # ── SSL Certificate (first deploy only) ───────────────────
+    - name: Check if SSL certificate exists
+      stat:
+        path: /var/lib/docker/volumes/{{ compose_project }}_certbot-conf/_data/live/{{ domain }}
+      register: cert_dir
+      tags: [certbot-init]
+
+    - name: Obtain SSL certificate via certbot standalone
+      when: not cert_dir.stat.exists
+      tags: [certbot-init, never]  # 'never' means this runs only with --tags certbot-init
+      block:
+        - name: Create certbot volume
+          community.docker.docker_volume:
+            name: "{{ compose_project }}_certbot-conf"
+            state: present
+
+        - name: Run certbot standalone
+          community.docker.docker_container:
+            name: ctmsn-certbot-init
+            image: certbot/certbot
+            state: started
+            detach: false
+            cleanup: true
+            ports:
+              - "80:80"
+            volumes:
+              - "{{ compose_project }}_certbot-conf:/etc/letsencrypt"
+            command: >-
+              certonly --standalone
+              --email {{ letsencrypt_email }}
+              --agree-tos --no-eff-email
+              -d {{ domain }}
+
+    # ── Build & Start ─────────────────────────────────────────
+    - name: Build and start services
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        build: always
+        state: present
+      tags: [deploy]
+
+    # ── Certificate renewal cron ──────────────────────────────
+    - name: Template cert renewal script
+      template:
+        src: templates/renew-certs.sh.j2
+        dest: "{{ app_dir }}/deploy/renew-certs.sh"
+        mode: "0755"
+      tags: [config]
+
+    - name: Setup cert renewal cron
+      cron:
+        name: "CTMSN certbot renewal"
+        minute: "0"
+        hour: "3"
+        job: "bash {{ app_dir }}/deploy/renew-certs.sh >> /var/log/ctmsn-certbot.log 2>&1"
+      tags: [config]
+
+    # ── Teacher account ───────────────────────────────────────
+    - name: Check if teacher account exists
+      command: >-
+        docker compose -f {{ app_dir }}/docker-compose.yml
+        exec -T api python -c
+        "from ctmsn_api.database import SessionLocal; from ctmsn_api.models import User;
+        db = SessionLocal();
+        u = db.query(User).filter(User.username=='{{ teacher_username }}').first();
+        print('exists' if u else 'missing')"
+      register: teacher_check
+      changed_when: false
+      failed_when: false
+      tags: [teacher]
+
+    - name: Create teacher account
+      command: >-
+        docker compose -f {{ app_dir }}/docker-compose.yml
+        exec -T api python -c
+        "from ctmsn_api.database import SessionLocal;
+        from ctmsn_api.models import User, UserRole;
+        from passlib.context import CryptContext;
+        db = SessionLocal();
+        db.add(User(username='{{ teacher_username }}',
+        hashed_password=CryptContext(schemes=['bcrypt']).hash('{{ teacher_password }}'),
+        role=UserRole.TEACHER));
+        db.commit(); print('Created')"
+      when: teacher_check.stdout is defined and 'missing' in teacher_check.stdout
+      tags: [teacher]
+
+  handlers:
+    - name: restart nginx
+      command: docker compose -f {{ app_dir }}/docker-compose.yml exec -T nginx nginx -s reload
+      failed_when: false

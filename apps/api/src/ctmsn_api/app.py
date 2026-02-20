@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ctmsn.core.concept import Concept
 from ctmsn.core.predicate import Predicate
 from ctmsn_api.auth import get_current_user
+from ctmsn_api.config import CORS_ORIGINS
 from ctmsn_api.database import create_tables, get_db, migrate_db
 from ctmsn_api.models import Comment, FormulaRecord, NamedContext, User, UserVariable, Workspace
 from ctmsn_api.ops import run_ops
@@ -38,10 +39,7 @@ app = FastAPI(title="CTnSS API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
