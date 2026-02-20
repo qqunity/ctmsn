@@ -128,9 +128,16 @@ export function WorkspaceList() {
                       </button>
                     </div>
                   ) : (
-                    <div>
+                    <div className="flex items-center gap-2">
                       <span className="font-medium">{w.name || w.scenario}</span>
-                      {w.mode && <span className="ml-2 text-sm text-gray-500">({w.mode})</span>}
+                      {w.mode && <span className="text-sm text-gray-500">({w.mode})</span>}
+                      {w.grade != null && (
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white ${
+                          w.grade >= 8 ? "bg-green-500" : w.grade >= 5 ? "bg-yellow-500" : "bg-red-500"
+                        }`}>
+                          {w.grade}
+                        </span>
+                      )}
                     </div>
                   )}
                 </a>

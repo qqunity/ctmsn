@@ -10,6 +10,7 @@ import {
   WorkspaceInfo,
   CommentInfo,
   StudentInfo,
+  GradeInfo,
   FormulaNode,
   FormulaInfo,
   UserVariableInfo,
@@ -244,6 +245,22 @@ export async function addTeacherComment(workspaceId: string, text: string): Prom
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
+  });
+  return ensureOk(r);
+}
+
+export async function setGrade(workspaceId: string, value: number): Promise<GradeInfo> {
+  const r = await authFetch(`${API_BASE}/api/teacher/workspaces/${workspaceId}/grade`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ value }),
+  });
+  return ensureOk(r);
+}
+
+export async function deleteGrade(workspaceId: string): Promise<{ ok: boolean }> {
+  const r = await authFetch(`${API_BASE}/api/teacher/workspaces/${workspaceId}/grade`, {
+    method: "DELETE",
   });
   return ensureOk(r);
 }

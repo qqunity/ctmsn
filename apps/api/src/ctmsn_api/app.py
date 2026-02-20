@@ -13,7 +13,7 @@ from ctmsn.core.predicate import Predicate
 from ctmsn_api.auth import get_current_user
 from ctmsn_api.config import CORS_ORIGINS
 from ctmsn_api.database import create_tables, get_db, migrate_db
-from ctmsn_api.models import Comment, FormulaRecord, NamedContext, User, UserVariable, Workspace
+from ctmsn_api.models import Comment, FormulaRecord, Grade, NamedContext, User, UserVariable, Workspace
 from ctmsn_api.ops import run_ops
 from ctmsn_api.registry import get as get_spec, init_registry, list_specs
 from ctmsn_api.routes_auth import router as auth_router
@@ -608,6 +608,7 @@ def list_workspaces(
                 "mode": w.mode,
                 "created_at": w.created_at.isoformat(),
                 "updated_at": w.updated_at.isoformat(),
+                "grade": w.grade.value if w.grade else None,
             }
             for w in ws_list
         ]

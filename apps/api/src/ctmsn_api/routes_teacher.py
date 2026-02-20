@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from ctmsn_api.auth import require_role
 from ctmsn_api.database import get_db
-from ctmsn_api.models import Comment, Role, User, Workspace
+from ctmsn_api.models import Comment, Grade, Role, User, Workspace
 
 router = APIRouter(prefix="/api/teacher", tags=["teacher"])
 
@@ -29,6 +29,7 @@ class WorkspaceInfo(BaseModel):
     mode: Optional[str]
     created_at: str
     updated_at: str
+    grade: Optional[int] = None
 
 
 class CommentOut(BaseModel):
@@ -37,6 +38,16 @@ class CommentOut(BaseModel):
     author_username: str
     text: str
     created_at: str
+
+
+class GradeOut(BaseModel):
+    value: int
+    teacher_username: str
+    updated_at: str
+
+
+class SetGradeReq(BaseModel):
+    value: int
 
 
 class AddCommentReq(BaseModel):
@@ -81,6 +92,7 @@ def student_workspaces(
         WorkspaceInfo(
             id=w.id, name=w.name, scenario=w.scenario, mode=w.mode,
             created_at=w.created_at.isoformat(), updated_at=w.updated_at.isoformat(),
+            grade=w.grade.value if w.grade else None,
         )
         for w in ws_list
     ]
@@ -111,6 +123,15 @@ def view_workspace(
     for k, v in ctx_values.items():
         ctx_display[k] = v.id if isinstance(v, Concept) else v
 
+    grade_out = None
+    if ws.grade:
+        teacher = db.query(User).filter(User.id == ws.grade.teacher_id).first()
+        grade_out = {
+            "value": ws.grade.value,
+            "teacher_username": teacher.username if teacher else "",
+            "updated_at": ws.grade.updated_at.isoformat(),
+        }
+
     return {
         "id": ws.id,
         "name": ws.name,
@@ -120,6 +141,7 @@ def view_workspace(
         "graph": serialize(net),
         "variables": variables,
         "context": ctx_display,
+        "grade": grade_out,
     }
 
 
@@ -172,3 +194,52 @@ def list_comments(
         )
         for c, uname in comments
     ]
+
+
+@router.put("/workspaces/{workspace_id}/grade", response_model=GradeOut)
+def set_grade(
+    workspace_id: str,
+    req: SetGradeReq,
+    teacher: User = Depends(_teacher_dep),
+    db: Session = Depends(get_db),
+):
+    if req.value < 1 or req.value > 10:
+        raise HTTPException(status_code=400, detail="Grade value must be between 1 and 10")
+
+    ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    grade = db.query(Grade).filter(Grade.workspace_id == workspace_id).first()
+    if grade:
+        grade.value = req.value
+        grade.teacher_id = teacher.id
+        from datetime import datetime, timezone
+        grade.updated_at = datetime.now(timezone.utc)
+    else:
+        grade = Grade(workspace_id=workspace_id, teacher_id=teacher.id, value=req.value)
+        db.add(grade)
+
+    db.commit()
+    db.refresh(grade)
+
+    return GradeOut(
+        value=grade.value,
+        teacher_username=teacher.username,
+        updated_at=grade.updated_at.isoformat(),
+    )
+
+
+@router.delete("/workspaces/{workspace_id}/grade")
+def delete_grade(
+    workspace_id: str,
+    teacher: User = Depends(_teacher_dep),
+    db: Session = Depends(get_db),
+):
+    grade = db.query(Grade).filter(Grade.workspace_id == workspace_id).first()
+    if not grade:
+        raise HTTPException(status_code=404, detail="Grade not found")
+
+    db.delete(grade)
+    db.commit()
+    return {"ok": True}

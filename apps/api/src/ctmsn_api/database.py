@@ -70,6 +70,14 @@ def migrate_db() -> None:
             stack VARCHAR(10) NOT NULL DEFAULT 'undo',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )""",
+        """CREATE TABLE IF NOT EXISTS grades (
+            id VARCHAR(32) PRIMARY KEY,
+            workspace_id VARCHAR(32) NOT NULL UNIQUE REFERENCES workspaces(id),
+            teacher_id VARCHAR(32) NOT NULL REFERENCES users(id),
+            value INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
     ]
     with engine.connect() as conn:
         for stmt in migrations:

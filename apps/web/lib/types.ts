@@ -85,6 +85,13 @@ export type WorkspaceInfo = {
   mode: string | null;
   created_at: string;
   updated_at: string;
+  grade?: number | null;
+};
+
+export type GradeInfo = {
+  value: number;
+  teacher_username: string;
+  updated_at: string;
 };
 
 export type CommentInfo = {

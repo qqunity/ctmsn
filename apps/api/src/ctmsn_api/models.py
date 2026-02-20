@@ -52,6 +52,7 @@ class Workspace(Base):
 
     owner = relationship("User", back_populates="workspaces")
     comments = relationship("Comment", back_populates="workspace", order_by="Comment.created_at")
+    grade = relationship("Grade", back_populates="workspace", uselist=False)
 
 
 class Comment(Base):
@@ -120,3 +121,17 @@ class NamedContext(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     workspace = relationship("Workspace")
+
+
+class Grade(Base):
+    __tablename__ = "grades"
+
+    id = Column(String(32), primary_key=True, default=_uuid_hex)
+    workspace_id = Column(String(32), ForeignKey("workspaces.id"), nullable=False, unique=True)
+    teacher_id = Column(String(32), ForeignKey("users.id"), nullable=False)
+    value = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    workspace = relationship("Workspace", back_populates="grade")
+    teacher = relationship("User")
