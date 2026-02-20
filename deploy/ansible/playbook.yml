@@ -120,6 +120,16 @@
       when: not cert_dir.stat.exists
       tags: [certbot-init, never]  # 'never' means this runs only with --tags certbot-init
       block:
+        - name: Stop docker-compose services that may occupy port 80
+          community.docker.docker_compose_v2:
+            project_src: "{{ app_dir }}"
+            state: absent
+          failed_when: false
+
+        - name: Kill any remaining process on port 80
+          shell: fuser -k 80/tcp || true
+          changed_when: false
+
         - name: Create certbot volume
           community.docker.docker_volume:
             name: "{{ compose_project }}_certbot-conf"
@@ -132,12 +142,14 @@
             state: started
             detach: false
             cleanup: true
-            ports:
-              - "80:80"
+            network_mode: host
+            dns_servers:
+              - "8.8.8.8"
+              - "1.1.1.1"
             volumes:
               - "{{ compose_project }}_certbot-conf:/etc/letsencrypt"
             command: >-
-              certonly --standalone
+              certonly --standalone --non-interactive
               --email {{ letsencrypt_email }}
               --agree-tos --no-eff-email
               -d {{ domain }}
@@ -183,15 +195,10 @@
     - name: Create teacher account
       command: >-
         docker compose -f {{ app_dir }}/docker-compose.yml
-        exec -T api python -c
-        "from ctmsn_api.database import SessionLocal;
-        from ctmsn_api.models import User, UserRole;
-        from passlib.context import CryptContext;
-        db = SessionLocal();
-        db.add(User(username='{{ teacher_username }}',
-        hashed_password=CryptContext(schemes=['bcrypt']).hash('{{ teacher_password }}'),
-        role=UserRole.TEACHER));
-        db.commit(); print('Created')"
+        exec -T api python -m ctmsn_api.cli
+        create-teacher
+        --username {{ teacher_username }}
+        --password {{ teacher_password }}
       when: teacher_check.stdout is defined and 'missing' in teacher_check.stdout
       tags: [teacher]
 
