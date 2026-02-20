@@ -63,3 +63,12 @@ def init_registry() -> None:
         register(ScenarioSpec("fast_smith", build_fast, None, goal_fast, conds_fast, variables=vars_fast))
     except Exception:
         pass
+
+    try:
+        from ctmsn.scenarios.lab1_university.model import build_network as build_lab1
+        from ctmsn.scenarios.lab1_university.goal import build_goal as goal_lab1
+        from ctmsn.scenarios.lab1_university.constraints import build_conditions as conds_lab1
+        from ctmsn.scenarios.lab1_university.params import build_variables as vars_lab1
+        register(ScenarioSpec("lab1_university", build_lab1, None, goal_lab1, conds_lab1, variables=vars_lab1))
+    except Exception:
+        pass
