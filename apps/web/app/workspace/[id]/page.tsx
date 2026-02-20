@@ -445,7 +445,7 @@ export default function WorkspacePage() {
           </div>
         </div>
       </div>
-      <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} scenario={scenario} />
     </div>
   );
 }

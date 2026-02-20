@@ -70,7 +70,7 @@ export default function WorkspacesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-bold">CTnSS</h1>
+        <h1 className="text-lg font-bold">CTMSN</h1>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">
             {user.username} ({user.role === "teacher" ? "преподаватель" : "студент"})

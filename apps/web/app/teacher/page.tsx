@@ -21,7 +21,7 @@ export default function TeacherPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold">CTnSS — Преподаватель</h1>
+          <h1 className="text-lg font-bold">CTMSN — Преподаватель</h1>
           <a href="/workspaces" className="text-sm text-blue-600 hover:underline">
             Мои пространства
           </a>

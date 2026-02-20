@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  TASK_DESCRIPTION,
+  getTaskDescription,
   GLOSSARY,
   TRUTH_TABLES,
   type TruthValue,
@@ -13,6 +13,7 @@ type Tab = "task" | "logic" | "glossary";
 interface HelpPanelProps {
   open: boolean;
   onClose: () => void;
+  scenario?: string;
 }
 
 const TAB_LABELS: { key: Tab; label: string }[] = [
@@ -33,7 +34,7 @@ function truthLabel(v: TruthValue): string {
   return "UNKNOWN";
 }
 
-export function HelpPanel({ open, onClose }: HelpPanelProps) {
+export function HelpPanel({ open, onClose, scenario }: HelpPanelProps) {
   const [tab, setTab] = useState<Tab>("task");
 
   const handleKeyDown = useCallback(
@@ -86,7 +87,7 @@ export function HelpPanel({ open, onClose }: HelpPanelProps) {
 
         {/* Body */}
         <div className="flex-1 overflow-auto p-4 text-sm">
-          {tab === "task" && <TaskTab />}
+          {tab === "task" && <TaskTab scenario={scenario} />}
           {tab === "logic" && <LogicTab />}
           {tab === "glossary" && <GlossaryTab />}
         </div>
@@ -95,9 +96,9 @@ export function HelpPanel({ open, onClose }: HelpPanelProps) {
   );
 }
 
-function TaskTab() {
+function TaskTab({ scenario }: { scenario?: string }) {
   // Simple markdown-like rendering: split by lines, handle headers and lists
-  const lines = TASK_DESCRIPTION.split("\n");
+  const lines = getTaskDescription(scenario ?? "").split("\n");
   return (
     <div className="space-y-1 leading-relaxed">
       {lines.map((line, i) => {

@@ -3,7 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
-  title: "CTnSS UI",
+  title: "CTMSN UI",
   description: "Local UI for Composable Typed Modules for Semantic Networks",
 };
 

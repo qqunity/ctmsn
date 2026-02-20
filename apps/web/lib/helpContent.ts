@@ -1,4 +1,5 @@
-export const TASK_DESCRIPTION = `
+export const TASK_DESCRIPTIONS: Record<string, string> = {
+  lab1_university: `
 ## Лабораторная работа 1. Знакомство с системой. Построение семантической сети
 
 ### Цель работы
@@ -30,7 +31,12 @@ export const TASK_DESCRIPTION = `
 - Полнота модели: достаточное количество сущностей и связей.
 - Осмысленность предикатов: роли отражают семантику отношений.
 - Оформление отчёта: описание предметной области, скриншот графа, экспортированный JSON.
-`.trim();
+`.trim(),
+};
+
+export function getTaskDescription(scenario: string): string {
+  return TASK_DESCRIPTIONS[scenario] ?? "Описание задания для данного сценария отсутствует.";
+}
 
 export interface GlossaryEntry {
   term: string;

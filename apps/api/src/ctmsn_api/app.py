@@ -35,7 +35,7 @@ from ctmsn_api.sessions import (
     put_session,
 )
 
-app = FastAPI(title="CTnSS API")
+app = FastAPI(title="CTMSN API")
 
 app.add_middleware(
     CORSMiddleware,

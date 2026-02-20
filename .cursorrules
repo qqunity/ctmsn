@@ -1,4 +1,4 @@
-# CTNSS - Cursor Rules
+# CTMSN - Cursor Rules
 
 ## Общие правила проекта
 
@@ -16,7 +16,7 @@
 ### Импорты
 - Всегда используй `from __future__ import annotations` в начале файла
 - Группируй импорты: стандартная библиотека → внешние библиотеки → локальные импорты
-- Используй абсолютные импорты для модулей внутри ctnss
+- Используй абсолютные импорты для модулей внутри ctmsn
 
 ### Типизация
 - Используй аннотации типов для всех функций и методов
@@ -98,7 +98,7 @@
 - Проверяй все три состояния TriBool
 
 ### Примеры:
-- Помещай примеры в `src/ctnss/examples/`
+- Помещай примеры в `src/ctmsn/examples/`
 - Делай примеры самодостаточными
 - Комментируй ключевые моменты для обучения
 - Показывай типичные сценарии использования
@@ -274,9 +274,9 @@ force result: true
 ```bash
 source venv/bin/activate
 
-python src/ctnss/examples/hello_forcing.py
+python src/ctmsn/examples/hello_forcing.py
 
-python src/ctnss/examples/example_usage.py
+python src/ctmsn/examples/example_usage.py
 
 python tests/test_smoke_imports.py
 ```

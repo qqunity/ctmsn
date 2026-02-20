@@ -1,7 +1,7 @@
 .PHONY: help install-api install-web install dev-api dev-web dev clean check-venv create-teacher test-e2e
 
 help:
-	@echo "CTnSS Local UI - Development Commands"
+	@echo "CTMSN Local UI - Development Commands"
 	@echo ""
 	@echo "ВАЖНО: Активируйте venv перед использованием:"
 	@echo "  source venv/bin/activate"

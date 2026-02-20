@@ -6,7 +6,7 @@ if [ -z "$VIRTUAL_ENV" ]; then
     exit 1
 fi
 
-echo "=== Starting CTnSS Local UI ==="
+echo "=== Starting CTMSN Local UI ==="
 echo ""
 echo "✓ venv активирован: $VIRTUAL_ENV"
 echo ""
