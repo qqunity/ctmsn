@@ -22,6 +22,7 @@ import {
   CascadeInfo,
   HistoryStatus,
   UndoRedoResponse,
+  BugReportInfo,
 } from "./types";
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./auth";
 
@@ -496,4 +497,46 @@ export async function redoNetwork(sessionId: string): Promise<UndoRedoResponse> 
 export async function getHistoryStatus(sessionId: string): Promise<HistoryStatus> {
   const r = await authFetch(`${API_BASE}/api/session/${sessionId}/history`);
   return ensureOk(r);
+}
+
+// ─── Bug Reports ─────────────────────────────────────────────
+
+export async function createBugReport(data: FormData): Promise<BugReportInfo> {
+  const r = await authFetch(`${API_BASE}/api/bugs`, {
+    method: "POST",
+    body: data,
+  });
+  return ensureOk(r);
+}
+
+export async function listMyBugs(): Promise<BugReportInfo[]> {
+  const r = await authFetch(`${API_BASE}/api/bugs/my`);
+  return ensureOk(r);
+}
+
+export async function listAllBugs(status?: string): Promise<BugReportInfo[]> {
+  const url = status ? `${API_BASE}/api/teacher/bugs?status_filter=${status}` : `${API_BASE}/api/teacher/bugs`;
+  const r = await authFetch(url);
+  return ensureOk(r);
+}
+
+export async function updateBugStatus(id: string, status: string): Promise<BugReportInfo> {
+  const r = await authFetch(`${API_BASE}/api/teacher/bugs/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  return ensureOk(r);
+}
+
+export async function deleteBugReport(id: string): Promise<{ ok: boolean }> {
+  const r = await authFetch(`${API_BASE}/api/teacher/bugs/${id}`, {
+    method: "DELETE",
+  });
+  return ensureOk(r);
+}
+
+export function getBugScreenshotUrl(id: string): string {
+  const token = getAccessToken();
+  return `${API_BASE}/api/bugs/${id}/screenshot${token ? `?token=${token}` : ""}`;
 }

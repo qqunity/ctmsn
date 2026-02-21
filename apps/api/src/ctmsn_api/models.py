@@ -123,6 +123,28 @@ class NamedContext(Base):
     workspace = relationship("Workspace")
 
 
+class BugStatus(str, enum.Enum):
+    open = "open"
+    closed = "closed"
+
+
+class BugReport(Base):
+    __tablename__ = "bug_reports"
+
+    id = Column(String(32), primary_key=True, default=_uuid_hex)
+    author_id = Column(String(32), ForeignKey("users.id"), nullable=False, index=True)
+    workspace_id = Column(String(32), ForeignKey("workspaces.id"), nullable=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    screenshot_path = Column(String(500), nullable=True)
+    status = Column(Enum(BugStatus), nullable=False, default=BugStatus.open)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    author = relationship("User")
+    workspace = relationship("Workspace")
+
+
 class Grade(Base):
     __tablename__ = "grades"
 

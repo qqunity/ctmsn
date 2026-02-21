@@ -215,6 +215,18 @@ export type UndoRedoResponse = {
   can_redo: boolean;
 };
 
+export type BugReportInfo = {
+  id: string;
+  author_username: string;
+  workspace_id: string | null;
+  workspace_name: string | null;
+  title: string;
+  description: string;
+  has_screenshot: boolean;
+  status: "open" | "closed";
+  created_at: string;
+};
+
 export type ForcingRunRecord = {
   id: string;
   timestamp: string;

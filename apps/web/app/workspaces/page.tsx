@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { WorkspaceList } from "@/components/WorkspaceList";
-import { listScenarios, loadScenario, importWorkspace } from "@/lib/api";
-import { ScenarioSpec } from "@/lib/types";
+import { BugReportForm } from "@/components/BugReportForm";
+import { listScenarios, loadScenario, importWorkspace, listWorkspaces } from "@/lib/api";
+import { ScenarioSpec, WorkspaceInfo } from "@/lib/types";
 
 export default function WorkspacesPage() {
   const { user, loading, logout } = useAuth();
@@ -17,6 +18,8 @@ export default function WorkspacesPage() {
   const [creating, setCreating] = useState(false);
   const [key, setKey] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [showBugForm, setShowBugForm] = useState(false);
+  const [myWorkspaces, setMyWorkspaces] = useState<WorkspaceInfo[]>([]);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -27,7 +30,8 @@ export default function WorkspacesPage() {
       setScenarios(s);
       if (s.length) setScenario(s[0].name);
     });
-  }, []);
+    listWorkspaces().then(setMyWorkspaces).catch(() => {});
+  }, [key]);
 
   const currentSpec = scenarios.find((s) => s.name === scenario);
 
@@ -149,20 +153,35 @@ export default function WorkspacesPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Мои пространства</h2>
-            <label className="text-sm text-blue-600 hover:underline cursor-pointer">
-              Импорт из файла
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={handleImport}
-              />
-            </label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowBugForm(true)}
+                className="text-sm text-red-600 hover:underline"
+              >
+                Сообщить о баге
+              </button>
+              <label className="text-sm text-blue-600 hover:underline cursor-pointer">
+                Импорт из файла
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={handleImport}
+                />
+              </label>
+            </div>
           </div>
           <WorkspaceList key={key} />
         </section>
       </main>
+
+      {showBugForm && (
+        <BugReportForm
+          workspaces={myWorkspaces}
+          onClose={() => setShowBugForm(false)}
+        />
+      )}
     </div>
   );
 }

@@ -172,7 +172,7 @@ for m in console_msgs:
 
 ## Saving Tests
 
-After each completed feature, **save the Playwright autotest script into `src/tests/`**. This ensures all e2e tests are collected in one place for regression testing. Name files descriptively, e.g. `e2e_login_flow.py`, `e2e_graph_visualization.py`.
+After each completed feature, **save the Playwright autotest script into `tests/`**. This ensures all e2e tests are collected in one place for regression testing. Name files descriptively, e.g. `e2e_login_flow.py`, `e2e_graph_visualization.py`.
 
 ## Reference Files
 

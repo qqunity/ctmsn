@@ -17,6 +17,7 @@ from ctmsn_api.models import Comment, FormulaRecord, Grade, NamedContext, User, 
 from ctmsn_api.ops import run_ops
 from ctmsn_api.registry import get as get_spec, init_registry, list_specs
 from ctmsn_api.routes_auth import router as auth_router
+from ctmsn_api.routes_bugs import router as bugs_router
 from ctmsn_api.routes_editors import router as editors_router
 from ctmsn_api.routes_teacher import router as teacher_router
 from ctmsn_api.serialize import serialize
@@ -46,6 +47,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(bugs_router)
 app.include_router(editors_router)
 app.include_router(teacher_router)
 

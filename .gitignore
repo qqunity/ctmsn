@@ -24,3 +24,4 @@ dmypy.json
 *~
 .env
 deploy/ansible/inventory.yml
+apps/uploads/*

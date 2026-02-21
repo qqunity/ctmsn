@@ -25,6 +25,9 @@ export default function TeacherPage() {
           <a href="/workspaces" className="text-sm text-blue-600 hover:underline">
             Мои пространства
           </a>
+          <a href="/teacher/bugs" className="text-sm text-blue-600 hover:underline">
+            Баг-репорты
+          </a>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">{user.username}</span>

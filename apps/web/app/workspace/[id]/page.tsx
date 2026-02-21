@@ -312,6 +312,7 @@ export default function WorkspacePage() {
               onClick={handleUndo}
               disabled={!historyStatus.can_undo}
               className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
+              title="Отменить (Ctrl+Z)"
             >
               &#x21A9;
             </button>
@@ -321,6 +322,7 @@ export default function WorkspacePage() {
               onClick={handleRedo}
               disabled={!historyStatus.can_redo}
               className="rounded px-2 py-1 text-sm disabled:opacity-30 hover:bg-gray-100"
+              title="Повторить (Ctrl+Shift+Z)"
             >
               &#x21AA;
             </button>

@@ -47,10 +47,16 @@ def test_register_and_login(page):
 
 
 def test_create_workspace(page):
-    """Create a workspace to test help panel in."""
+    """Create a workspace with lab1_university scenario to test help panel in."""
     print("TEST: Create workspace")
     goto_with_retry(page, f"{BASE_URL}/workspaces")
     page.wait_for_timeout(2000)
+
+    # Select lab1_university scenario (needed for task tab content)
+    scenario_select = page.locator("select").first
+    if scenario_select.count() > 0:
+        scenario_select.select_option("lab1_university")
+        page.wait_for_timeout(500)
 
     page.locator("button:has-text('Создать')").first.click()
     page.wait_for_timeout(5000)

@@ -9,6 +9,18 @@ import pytest
 
 
 BASE_URL = "http://localhost:3000"
+API_BASE = "http://127.0.0.1:8000"
+
+
+def goto_with_retry(page, url, retries=3, delay=3000):
+    """Navigate to URL with retries for dev server readiness."""
+    for attempt in range(retries):
+        page.goto(url)
+        page.wait_for_load_state("networkidle")
+        if page.locator("text=This page could not be found").count() == 0:
+            return
+        if attempt < retries - 1:
+            page.wait_for_timeout(delay)
 
 
 @pytest.fixture(scope="module")

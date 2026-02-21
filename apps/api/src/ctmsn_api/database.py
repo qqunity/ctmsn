@@ -70,6 +70,17 @@ def migrate_db() -> None:
             stack VARCHAR(10) NOT NULL DEFAULT 'undo',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )""",
+        """CREATE TABLE IF NOT EXISTS bug_reports (
+            id VARCHAR(32) PRIMARY KEY,
+            author_id VARCHAR(32) NOT NULL REFERENCES users(id),
+            workspace_id VARCHAR(32) REFERENCES workspaces(id),
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            screenshot_path VARCHAR(500),
+            status VARCHAR(10) NOT NULL DEFAULT 'open',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
         """CREATE TABLE IF NOT EXISTS grades (
             id VARCHAR(32) PRIMARY KEY,
             workspace_id VARCHAR(32) NOT NULL UNIQUE REFERENCES workspaces(id),

@@ -1,11 +1,15 @@
 """E2E tests for Grade feature (teacher sets grade, student sees it)."""
+import glob
+import sqlite3
 import sys
 import traceback
 import requests
+import pytest
 from playwright.sync_api import sync_playwright
 
-BASE_URL = "http://localhost:3000"
-API_URL = "http://localhost:8000"
+from conftest import BASE_URL, API_BASE
+
+API_URL = API_BASE
 
 
 def goto_with_retry(page, url, retries=3, delay=3000):
@@ -44,6 +48,27 @@ def create_workspace_api(token, scenario="fishing"):
     return resp.json()
 
 
+def _promote_to_teacher(username):
+    """Promote user to teacher via direct DB update."""
+    db_paths = glob.glob("/Users/dmaksimov/TestProjects/ctmsn/apps/api/*.db")
+    if not db_paths:
+        db_paths = glob.glob("/Users/dmaksimov/TestProjects/ctmsn/*.db")
+    if not db_paths:
+        db_paths = ["ctmsn.db"]
+
+    for p in db_paths:
+        try:
+            conn = sqlite3.connect(p)
+            conn.execute("UPDATE users SET role='teacher' WHERE username=?", (username,))
+            conn.commit()
+            conn.close()
+            return
+        except Exception:
+            continue
+
+    raise RuntimeError("Could not promote user to teacher")
+
+
 def login_via_ui(page, username, password):
     # Navigate first to get a valid origin, then clear storage
     page.goto(f"{BASE_URL}/login")
@@ -60,6 +85,19 @@ def login_via_ui(page, username, password):
     page.locator("button[type='submit'], button:has-text('Войти')").first.click()
     page.wait_for_timeout(2000)
     page.wait_for_load_state("networkidle")
+
+
+@pytest.fixture(scope="module")
+def student_token():
+    """Register student and teacher users, promote teacher, return student token."""
+    register_user("grade_student", "testpass123")
+    register_user("grade_teacher", "testpass123")
+    _promote_to_teacher("grade_teacher")
+
+    student_data = login_api("grade_student", "testpass123")
+    token = student_data.get("access_token")
+    assert token, f"Failed to get student token: {student_data}"
+    return token
 
 
 def test_teacher_set_grade(page, student_token):
@@ -153,12 +191,12 @@ def test_teacher_update_grade(page):
     print("  PASS")
 
 
-def test_student_sees_grade(browser):
+def test_student_sees_grade(_browser):
     """Student sees grade in workspace list (uses fresh browser context)."""
     print("TEST: Student sees grade in workspace list")
 
-    # Use a fresh page to avoid stale auth state
-    page = browser.new_page()
+    ctx = _browser.new_context()
+    page = ctx.new_page()
     login_via_ui(page, "grade_student", "testpass123")
     page.wait_for_timeout(2000)
 
@@ -175,14 +213,16 @@ def test_student_sees_grade(browser):
 
     page.screenshot(path="/tmp/e2e_grade_student_view.png")
     page.close()
+    ctx.close()
     print("  PASS")
 
 
-def test_teacher_delete_grade(browser):
+def test_teacher_delete_grade(_browser):
     """Teacher deletes grade (uses fresh browser context)."""
     print("TEST: Teacher deletes grade")
 
-    page = browser.new_page()
+    ctx = _browser.new_context()
+    page = ctx.new_page()
     login_via_ui(page, "grade_teacher", "testpass123")
 
     # Go to teacher dashboard
@@ -223,6 +263,7 @@ def test_teacher_delete_grade(browser):
 
     page.screenshot(path="/tmp/e2e_grade_deleted.png")
     page.close()
+    ctx.close()
     print("  PASS")
 
 
