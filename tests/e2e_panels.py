@@ -96,11 +96,11 @@ def test_equations_panel(page):
     """Verify the Equations panel is visible."""
     print("TEST: Equations panel")
 
-    eq_heading = page.locator("text=Equations")
+    eq_heading = page.locator("text=Уравнения")
     assert eq_heading.count() > 0, "Equations heading not found"
 
-    # Check for equation items or "No equations"
-    no_eq = page.locator("text=No equations")
+    # Check for equation items or "Нет уравнений"
+    no_eq = page.locator("text=Нет уравнений")
     eq_items = page.locator("ul.divide-y li")
 
     if no_eq.count() > 0:

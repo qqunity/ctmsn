@@ -9,10 +9,10 @@ export function EquationsPanel({
 }) {
   return (
     <div className="space-y-2">
-      <div className="text-sm font-semibold">Equations</div>
+      <div className="text-sm font-semibold">Уравнения</div>
       <div className="max-h-64 overflow-auto rounded-lg border bg-white">
         {eqs.length === 0 ? (
-          <div className="p-3 text-sm text-zinc-500">No equations</div>
+          <div className="p-3 text-sm text-zinc-500">Нет уравнений</div>
         ) : (
           <ul className="divide-y">
             {eqs.map((eq, i) => (

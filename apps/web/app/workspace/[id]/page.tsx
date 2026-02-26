@@ -20,6 +20,7 @@ import { GraphLegend } from "@/components/GraphLegend";
 import { LayoutSelector } from "@/components/LayoutSelector";
 import { Tooltip } from "@/components/Tooltip";
 import { HelpPanel } from "@/components/HelpPanel";
+import { NetworkStatsPanel } from "@/components/NetworkStatsPanel";
 import { TOOLTIPS } from "@/lib/helpContent";
 
 export default function WorkspacePage() {
@@ -398,6 +399,7 @@ export default function WorkspacePage() {
 
         <div className="w-[460px] shrink-0 overflow-auto border-l bg-white p-4">
           <div className="space-y-4">
+            <NetworkStatsPanel graph={data?.graph ?? null} />
             <StatusPanel data={data} />
             {data?.variables && data.variables.length > 0 && (
               <VariableEditorPanel

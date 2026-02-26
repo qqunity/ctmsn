@@ -86,16 +86,16 @@ def test_scenario_bar_visible(page):
     print("TEST: ScenarioBar visible")
     page.wait_for_timeout(2000)
 
-    # Check for "New session" button
-    new_session_btn = page.locator("button:has-text('New session')")
+    # Check for "Новая сессия" button
+    new_session_btn = page.locator("button:has-text('Новая сессия')")
     assert new_session_btn.count() > 0, "New session button not found"
 
     # Check for Load button
-    load_btn = page.locator("button:has-text('Load')")
+    load_btn = page.locator("button:has-text('Загрузить')")
     assert load_btn.count() > 0, "Load button not found"
 
     # Check for Run button
-    run_btn = page.locator("button:has-text('Run')")
+    run_btn = page.locator("button:has-text('Запустить')")
     assert run_btn.count() > 0, "Run button not found"
 
     # Check for derive checkbox
@@ -174,7 +174,7 @@ def test_load_scenario(page):
     """Load a scenario using the Load button."""
     print("TEST: Load scenario")
 
-    load_btn = page.locator("button:has-text('Load')")
+    load_btn = page.locator("button:has-text('Загрузить')")
     assert load_btn.count() > 0, "Load button not found"
 
     # Remember current URL
@@ -200,7 +200,7 @@ def test_derive_checkbox(page):
     """Toggle the derive checkbox and load with derive."""
     print("TEST: Derive checkbox")
 
-    derive_label = page.locator("label:has-text('derive')")
+    derive_label = page.locator("label:has-text('вывод')")
     if derive_label.count() > 0:
         checkbox = derive_label.locator("input[type='checkbox']")
         if checkbox.count() > 0:
@@ -237,7 +237,7 @@ def test_run_scenario(page):
     """Run the current scenario using the Run button."""
     print("TEST: Run scenario")
 
-    run_btn = page.locator("button:has-text('Run')")
+    run_btn = page.locator("button:has-text('Запустить')")
     assert run_btn.count() > 0, "Run button not found"
 
     run_btn.click()
@@ -256,7 +256,7 @@ def test_new_session(page):
     """Click "New session" button to start a fresh session."""
     print("TEST: New session")
 
-    new_session_btn = page.locator("button:has-text('New session')")
+    new_session_btn = page.locator("button:has-text('Новая сессия')")
     assert new_session_btn.count() > 0, "New session button not found"
 
     old_url = page.url
@@ -301,7 +301,7 @@ def test_scenario_with_fast_smith(page):
         page.wait_for_timeout(300)
 
     # Ensure derive is on
-    derive_label = page.locator("label:has-text('derive')")
+    derive_label = page.locator("label:has-text('вывод')")
     if derive_label.count() > 0:
         checkbox = derive_label.locator("input[type='checkbox']")
         if checkbox.count() > 0 and not checkbox.is_checked():
@@ -309,7 +309,7 @@ def test_scenario_with_fast_smith(page):
             page.wait_for_timeout(200)
 
     # Load
-    page.locator("button:has-text('Load')").click()
+    page.locator("button:has-text('Загрузить')").click()
     page.wait_for_timeout(5000)
     page.wait_for_load_state("networkidle")
 
