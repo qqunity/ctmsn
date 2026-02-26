@@ -6,7 +6,7 @@ def serialize(net) -> dict[str, Any]:
     for cid, c in net.concepts.items():
         nodes.append({
             "id": cid, 
-            "label": getattr(c, "title", None) or getattr(c, "name", None) or cid,
+            "label": getattr(c, "label", None) or getattr(c, "title", None) or getattr(c, "name", None) or cid,
             "tags": list(c.tags) if hasattr(c, 'tags') else []
         })
     
