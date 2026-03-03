@@ -35,7 +35,7 @@ def test_fast_smith_network_structure():
     for cid in required_concepts:
         assert cid in net.concepts
     
-    required_predicates = ["edge", "comp", "in", "has_name", "married", "acts_like"]
+    required_predicates = ["edge", "comp2", "comp2_expl", "in", "has_name", "married", "acts_like"]
     for pid in required_predicates:
         assert pid in net.predicates
     
@@ -47,7 +47,7 @@ def test_fast_smith_compositions():
     
     net = build_network()
     
-    comp_facts = list(net.facts("comp"))
+    comp_facts = list(net.facts("comp2"))
     assert len(comp_facts) == 3
     
     comp_tuples = {tuple(str(arg) if hasattr(arg, 'id') else arg for arg in s.args) for s in comp_facts}

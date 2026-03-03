@@ -102,7 +102,7 @@ def test_teacher_login(page):
         print("  SKIP: No teacher user available (testteacher1 is not a teacher)")
         print("  NOTE: Set role='teacher' in DB for testteacher1 to enable this test")
         print("  PASS")
-        return False
+        return
 
     goto_with_retry(page, f"{BASE_URL}/login")
     page.wait_for_timeout(1000)
@@ -119,7 +119,7 @@ def test_teacher_login(page):
 
     page.screenshot(path="/tmp/e2e_teacher_logged_in.png")
     print("  PASS")
-    return True
+    return
 
 
 def test_teacher_dashboard_visible(page):
@@ -321,9 +321,11 @@ def main():
                 results.append((test_fn.__name__, f"FAIL: {e}"))
 
         # Teacher tests
+        is_teacher, _ = ensure_teacher_user()
         teacher_logged_in = False
         try:
-            teacher_logged_in = test_teacher_login(page)
+            test_teacher_login(page)
+            teacher_logged_in = is_teacher
             passed += 1
             results.append(("test_teacher_login", "PASS"))
         except Exception as e:

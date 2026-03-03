@@ -34,7 +34,9 @@ def build_network() -> SemanticNetwork:
 
     net.add_predicate(Predicate("edge", 3, roles=("label", "from", "to")))
 
-    net.add_predicate(Predicate("comp", 3, roles=("left", "right", "result")))
+    net.add_predicate(Predicate("comp2", 3, roles=("left", "right", "result")))
+
+    net.add_predicate(Predicate("comp2_expl", 4, roles=("left", "right", "result", "mid")))
 
     net.add_predicate(Predicate("in", 2, roles=("elem", "set")))
 
@@ -64,11 +66,13 @@ def build_network() -> SemanticNetwork:
     net.assert_fact("edge", ("incl", Cf_minus, T_minus))
     net.assert_fact("edge", ("incl", Cf_plus, T_plus))
 
-    net.assert_fact("comp", ("h", "g", "j"))
+    net.assert_fact("comp2", ("h", "g", "j"))
+    net.assert_fact("comp2_expl", ("h", "g", "j", "T"))
 
-    net.assert_fact("comp", ("h", "not-g", "s"))
+    net.assert_fact("comp2", ("h", "not-g", "s"))
+    net.assert_fact("comp2_expl", ("h", "not-g", "s", "T"))
 
-    net.assert_fact("comp", ("sf", "r", "jf"))
+    net.assert_fact("comp2", ("sf", "r", "jf"))
 
     net.assert_fact("acts_like", (A, "j"))
     net.assert_fact("acts_like", (A, "s"))

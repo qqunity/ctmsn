@@ -122,7 +122,7 @@ def test_teacher_set_grade(page, student_token):
     if student_link.count() == 0:
         print("  SKIP: Student not found in teacher list")
         print("  PASS")
-        return None
+        return
     student_link.first.click()
     page.wait_for_timeout(3000)
 
@@ -131,7 +131,7 @@ def test_teacher_set_grade(page, student_token):
     if ws_buttons.count() == 0:
         print("  SKIP: No workspace buttons found")
         print("  PASS")
-        return None
+        return
     ws_buttons.first.click()
     page.wait_for_timeout(3000)
 
@@ -155,7 +155,7 @@ def test_teacher_set_grade(page, student_token):
 
     page.screenshot(path="/tmp/e2e_grade_set.png")
     print("  PASS")
-    return ws_id
+    return
 
 
 def test_teacher_update_grade(page):

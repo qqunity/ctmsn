@@ -15,8 +15,8 @@ def build_conditions(net: SemanticNetwork) -> Conditions:
 
     c2 = Not(FactAtom("in", (T_minus, T_plus)))
 
-    c3 = FactAtom("comp", ("h", "g", "j"))
-    c4 = FactAtom("comp", ("h", "not-g", "s"))
-    c5 = FactAtom("comp", ("sf", "r", "jf"))
+    c3 = FactAtom("comp2", ("h", "g", "j"))
+    c4 = FactAtom("comp2", ("h", "not-g", "s"))
+    c5 = FactAtom("comp2", ("sf", "r", "jf"))
 
     return Conditions().add(c1, c2, c3, c4, c5)
