@@ -14,6 +14,9 @@ type Props = {
   sessionId: string;
   formulas: FormulaInfo[];
   contexts: NamedContextInfo[];
+  scenarioCheck?: string | null;
+  scenarioForces?: string | null;
+  scenarioForce?: string | null;
 };
 
 const RESULT_COLORS: Record<string, string> = {
@@ -28,7 +31,48 @@ const RESULT_LABELS: Record<string, string> = {
   unknown: "UNKNOWN",
 };
 
-export function ForcingPanel({ sessionId, formulas, contexts }: Props) {
+function parseCheckOk(value: string): boolean {
+  // Handle "CheckResult(ok=True, ...)" or simple "ok" / "fail"
+  const m = value.match(/ok=(True|False)/i);
+  if (m) return m[1].toLowerCase() === "true";
+  return value.toLowerCase() === "ok";
+}
+
+function parseTribool(value: string): string {
+  // Handle "ForceResult(status=<TriBool.TRUE: 'true'>, ...)"
+  const statusMatch = value.match(/status=<(?:TriBool\.)?(\w+):/i);
+  if (statusMatch) return statusMatch[1].toUpperCase();
+  // Handle "TriBool.TRUE" or plain "TRUE"
+  return value.replace(/^.*TriBool\./i, "").replace(/[^A-Za-z].*/s, "").toUpperCase();
+}
+
+function triboolColors(normalized: string): string {
+  if (normalized === "TRUE") return "bg-green-100 text-green-700";
+  if (normalized === "FALSE") return "bg-red-100 text-red-700";
+  if (normalized === "UNKNOWN") return "bg-yellow-100 text-yellow-700";
+  return "bg-gray-100 text-gray-700";
+}
+
+function scenarioBadge(value: string | null | undefined, type: "check" | "tribool") {
+  if (!value) return <span className="text-xs text-gray-400">—</span>;
+  if (type === "check") {
+    const isOk = parseCheckOk(value);
+    return (
+      <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${isOk ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+        {isOk ? "ok" : "fail"}
+      </span>
+    );
+  }
+  // tribool
+  const normalized = parseTribool(value);
+  return (
+    <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${triboolColors(normalized)}`}>
+      {normalized}
+    </span>
+  );
+}
+
+export function ForcingPanel({ sessionId, formulas, contexts, scenarioCheck, scenarioForces, scenarioForce }: Props) {
   const [contextId, setContextId] = useState<string>("");
   const [selectedConditions, setSelectedConditions] = useState<Set<string>>(new Set());
   const [phiId, setPhiId] = useState<string>("");
@@ -108,6 +152,33 @@ export function ForcingPanel({ sessionId, formulas, contexts }: Props) {
   return (
     <div>
       <h3 className="text-sm font-semibold mb-2">Форсирование</h3>
+
+      {/* Scenario run results */}
+      {(scenarioCheck || scenarioForces || scenarioForce) && (
+        <div className="mb-3 border rounded bg-gray-50 p-2">
+          <div className="text-xs font-medium text-gray-500 mb-1">Результат сценария</div>
+          <div className="space-y-1">
+            {scenarioCheck != null && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-gray-500 w-12">check:</span>
+                {scenarioBadge(scenarioCheck, "check")}
+              </div>
+            )}
+            {scenarioForces != null && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-gray-500 w-12">forces:</span>
+                {scenarioBadge(scenarioForces, "tribool")}
+              </div>
+            )}
+            {scenarioForce != null && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-gray-500 w-12">force:</span>
+                {scenarioBadge(scenarioForce, "tribool")}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Context selector */}
       <div className="mb-2">

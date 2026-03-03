@@ -434,6 +434,9 @@ export default function WorkspacePage() {
                 sessionId={sessionId}
                 formulas={sharedFormulas}
                 contexts={sharedContexts}
+                scenarioCheck={data?.check ?? null}
+                scenarioForces={data?.forces ?? null}
+                scenarioForce={data?.force ?? null}
               />
             )}
             {sessionId && (
