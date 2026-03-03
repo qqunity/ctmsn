@@ -154,12 +154,24 @@
               --agree-tos --no-eff-email
               -d {{ domain }}
 
-    # ── Build & Start ─────────────────────────────────────────
-    - name: Build and start services
-      community.docker.docker_compose_v2:
-        project_src: "{{ app_dir }}"
-        build: always
-        state: present
+    # ── Build & Start (zero-downtime) ───────────────────────────
+    - name: Prune dangling images
+      community.docker.docker_prune:
+        images: true
+        images_filters:
+          dangling: "true"
+      tags: [deploy]
+
+    - name: Build images
+      ansible.builtin.command:
+        cmd: docker compose --project-directory {{ app_dir }} build
+      changed_when: true
+      tags: [deploy]
+
+    - name: Recreate services with new images
+      ansible.builtin.command:
+        cmd: docker compose --project-directory {{ app_dir }} up -d --no-deps --build --remove-orphans
+      changed_when: true
       tags: [deploy]
 
     # ── Certificate renewal cron ──────────────────────────────

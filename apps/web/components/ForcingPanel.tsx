@@ -43,7 +43,7 @@ function parseTribool(value: string): string {
   const statusMatch = value.match(/status=<(?:TriBool\.)?(\w+):/i);
   if (statusMatch) return statusMatch[1].toUpperCase();
   // Handle "TriBool.TRUE" or plain "TRUE"
-  return value.replace(/^.*TriBool\./i, "").replace(/[^A-Za-z].*/s, "").toUpperCase();
+  return value.replace(/^.*TriBool\./i, "").replace(/[^A-Za-z].*/, "").toUpperCase();
 }
 
 function triboolColors(normalized: string): string {
