@@ -384,7 +384,7 @@ export default function WorkspacePage() {
         onRun={handleRun}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden overflow-x-hidden">
         <div className="flex-1 relative">
           <GraphView
             ref={graphRef}
@@ -397,7 +397,7 @@ export default function WorkspacePage() {
           <GraphLegend />
         </div>
 
-        <div className="w-[460px] shrink-0 overflow-auto border-l bg-white p-4">
+        <div className="w-[460px] min-w-[300px] shrink overflow-auto border-l bg-white p-4">
           <div className="space-y-4">
             <NetworkStatsPanel graph={data?.graph ?? null} />
             <StatusPanel data={data} />

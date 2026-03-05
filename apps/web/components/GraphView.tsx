@@ -46,7 +46,7 @@ export const GraphView = forwardRef<
       const elements = !graph
         ? []
         : [
-            ...graph.nodes.map((n) => ({ data: { id: n.id, label: n.label, tags: n.tags || [] } })),
+            ...graph.nodes.map((n) => ({ data: { id: n.id, label: n.label, displayLabel: `[${n.id}] ${n.label}`, tags: n.tags || [] } })),
             ...graph.edges.map((e) => ({
               data: { id: e.id, source: e.source, target: e.target, label: e.label, kind: e.kind },
             })),
@@ -64,7 +64,7 @@ export const GraphView = forwardRef<
           {
             selector: "node",
             style: {
-              label: "data(label)",
+              label: "data(displayLabel)",
               "background-color": "#3b82f6",
               color: "#fff",
               "text-valign": "center",
