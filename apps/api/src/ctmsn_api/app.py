@@ -192,7 +192,7 @@ def run(
 class SetVariableReq(BaseModel):
     session_id: str
     variable: str
-    value: str
+    value: str | None = None
 
 
 @app.post("/api/session/set_variable")
@@ -211,39 +211,43 @@ def set_variable(
 
     spec = get_spec(st.scenario)
 
-    # Resolve value: try concept first, then keep as string
-    resolved_value: Any = req.value
-    if req.value in st.net.concepts:
-        resolved_value = st.net.concepts[req.value]
-
-    # Validate via variables if available
-    if spec.variables:
-        import inspect
-        sig = inspect.signature(spec.variables)
-        params = list(sig.parameters.keys())
-        if len(params) >= 1:
-            variables_result = spec.variables(st.net)
-        else:
-            variables_result = spec.variables()
-
-        from ctmsn.param.variable import Variable
-        vars_obj = variables_result[0]
-        found = False
-        for attr_name in dir(vars_obj):
-            val = getattr(vars_obj, attr_name, None)
-            if isinstance(val, Variable) and val.name == req.variable:
-                if not val.domain.contains(resolved_value):
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Value '{req.value}' not in domain of '{req.variable}': {val.domain.describe()}",
-                    )
-                found = True
-                break
-        if not found:
-            raise HTTPException(status_code=400, detail=f"Unknown variable '{req.variable}'")
-
     ctx_values = dict(st.context_values)
-    ctx_values[req.variable] = resolved_value
+
+    if not req.value:  # empty or None → unset
+        ctx_values.pop(req.variable, None)
+    else:
+        # Resolve value: try concept first, then keep as string
+        resolved_value: Any = req.value
+        if req.value in st.net.concepts:
+            resolved_value = st.net.concepts[req.value]
+
+        # Validate via variables if available
+        if spec.variables:
+            import inspect
+            sig = inspect.signature(spec.variables)
+            params = list(sig.parameters.keys())
+            if len(params) >= 1:
+                variables_result = spec.variables(st.net)
+            else:
+                variables_result = spec.variables()
+
+            from ctmsn.param.variable import Variable
+            vars_obj = variables_result[0]
+            found = False
+            for attr_name in dir(vars_obj):
+                val = getattr(vars_obj, attr_name, None)
+                if isinstance(val, Variable) and val.name == req.variable:
+                    if not val.domain.contains(resolved_value):
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Value '{req.value}' not in domain of '{req.variable}': {val.domain.describe()}",
+                        )
+                    found = True
+                    break
+            if not found:
+                raise HTTPException(status_code=400, detail=f"Unknown variable '{req.variable}'")
+
+        ctx_values[req.variable] = resolved_value
 
     put_session(req.session_id, st, db, context_values=ctx_values)
 

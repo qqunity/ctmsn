@@ -32,7 +32,7 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
     fetchUserVars();
   }, [fetchUserVars]);
 
-  async function handleChange(varName: string, value: string) {
+  async function handleChange(varName: string, value: string | null) {
     setLoading(varName);
     try {
       const resp = await setVariable(sessionId, varName, value);
@@ -86,7 +86,7 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
                   {v.domain_type === "enum" && v.values ? (
                     <select
                       value={String(currentValue)}
-                      onChange={(e) => handleChange(v.name, e.target.value)}
+                      onChange={(e) => handleChange(v.name, e.target.value || null)}
                       disabled={isLoading}
                       className="border rounded px-2 py-1 text-sm flex-1 disabled:opacity-50"
                     >

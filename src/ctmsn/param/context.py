@@ -14,6 +14,9 @@ class Context:
             raise ValueError(f"Value '{value}' not in domain of {var.name}: {var.domain.describe()}")
         self._values[var.name] = value
 
+    def unset(self, var: Variable) -> None:
+        self._values.pop(var.name, None)
+
     def get(self, var: Variable, default: Any = None) -> Any:
         return self._values.get(var.name, default)
 

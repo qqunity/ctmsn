@@ -539,7 +539,10 @@ def set_context_variable(
         raise HTTPException(status_code=404, detail="Context not found")
 
     ctx_data = json.loads(nc.context_json) if nc.context_json else {}
-    ctx_data[req.variable] = req.value
+    if req.value is None or req.value == "":
+        ctx_data.pop(req.variable, None)
+    else:
+        ctx_data[req.variable] = req.value
     nc.context_json = json.dumps(ctx_data)
 
     if nc.is_active == 1:

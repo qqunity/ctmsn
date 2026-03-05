@@ -124,7 +124,7 @@ export async function runScenario(req: { session_id: string; derive?: boolean })
   return (await r.json()) as LoadResponse;
 }
 
-export async function setVariable(sessionId: string, variable: string, value: string): Promise<LoadResponse> {
+export async function setVariable(sessionId: string, variable: string, value: string | null): Promise<LoadResponse> {
   const r = await authFetch(`${API_BASE}/api/session/set_variable`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

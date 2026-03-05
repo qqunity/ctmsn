@@ -83,7 +83,7 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
     }
   }
 
-  async function handleSetVariable(cid: string, varName: string, value: string) {
+  async function handleSetVariable(cid: string, varName: string, value: string | null) {
     setLoading(true);
     try {
       const updated = await setContextVariable(sessionId, cid, varName, value);
@@ -178,7 +178,7 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
                       {v.domain_type === "enum" && v.values ? (
                         <select
                           value={String(currentValue)}
-                          onChange={(e) => handleSetVariable(ctx.id, v.name, e.target.value)}
+                          onChange={(e) => handleSetVariable(ctx.id, v.name, e.target.value || null)}
                           disabled={loading}
                           className="border rounded px-1 py-0.5 text-xs flex-1 disabled:opacity-50"
                         >
