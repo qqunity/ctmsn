@@ -45,10 +45,15 @@ def get_variable_info(
     if spec.variables:
         sig = inspect.signature(spec.variables)
         params = list(sig.parameters.keys())
-        if 'net' in params or len(params) >= 1:
-            variables_result = spec.variables(net)
-        else:
-            variables_result = spec.variables()
+        try:
+            if 'net' in params or len(params) >= 1:
+                variables_result = spec.variables(net)
+            else:
+                variables_result = spec.variables()
+        except KeyError:
+            if user_variables:
+                result.extend(user_variables)
+            return result if result else None
 
         vars_obj = variables_result[0]
         for attr_name in dir(vars_obj):
@@ -91,9 +96,12 @@ def _get_variables_result(spec, net):
         return None
     sig = inspect.signature(spec.variables)
     params = list(sig.parameters.keys())
-    if 'net' in params or len(params) >= 1:
-        return spec.variables(net)
-    return spec.variables()
+    try:
+        if 'net' in params or len(params) >= 1:
+            return spec.variables(net)
+        return spec.variables()
+    except KeyError:
+        return None
 
 
 def _serialize_context(ctx: Context, net) -> dict[str, Any]:
