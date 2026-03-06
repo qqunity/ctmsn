@@ -121,7 +121,7 @@ export default function StudentWorkspacesPage() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">{w.scenario}</span>
+                  <span className="font-medium truncate">{w.name}</span>
                   {w.grade != null && (
                     <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white ${
                       w.grade >= 8 ? "bg-green-500" : w.grade >= 5 ? "bg-yellow-500" : "bg-red-500"
@@ -130,7 +130,7 @@ export default function StudentWorkspacesPage() {
                     </span>
                   )}
                 </div>
-                {w.mode && <span className="text-gray-500 text-xs">({w.mode})</span>}
+                <span className="text-gray-500 text-xs">{w.scenario}{w.mode ? ` (${w.mode})` : ""}</span>
                 <p className="text-xs text-gray-400">{new Date(w.created_at).toLocaleString("ru")}</p>
               </button>
             ))}
