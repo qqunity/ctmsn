@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { setGrade, deleteGrade } from "@/lib/api";
 import { GradeInfo } from "@/lib/types";
 
@@ -13,6 +13,11 @@ export function GradePanel({ workspaceId, initialGrade }: Props) {
   const [gradeInfo, setGradeInfo] = useState<GradeInfo | null>(initialGrade);
   const [gradeValue, setGradeValue] = useState(initialGrade?.value ?? 5);
   const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    setGradeInfo(initialGrade);
+    setGradeValue(initialGrade?.value ?? 5);
+  }, [initialGrade]);
 
   async function handleSetGrade() {
     try {
