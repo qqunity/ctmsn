@@ -59,12 +59,11 @@ class ForcingEngine:
             for assignment in strategy.candidates(ctx, unassigned):
                 extended = ctx.extend(assignment)
                 if self.forces(extended, phi, conditions) is TriBool.TRUE:
+                    desc = {v.name: val for v, val in assignment.items()}
                     return ForceResult(
                         status=TriBool.TRUE,
                         context=extended,
-                        explanation=f"Found assignment: {
-                            {v.name: val for v, val in assignment.items()}
-                        }",
+                        explanation=f"Found assignment: {desc}",
                     )
             return ForceResult(status=TriBool.FALSE, context=None, explanation="No satisfying assignment found")
         except ValueError as e:
