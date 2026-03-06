@@ -114,6 +114,29 @@ def view_workspace(
         raise HTTPException(status_code=404, detail="Workspace not found")
 
     net = network_from_json(ws.network_json)
+
+    grade_out = None
+    if ws.grade:
+        grade_teacher = db.query(User).filter(User.id == ws.grade.teacher_id).first()
+        grade_out = {
+            "value": ws.grade.value,
+            "teacher_username": grade_teacher.username if grade_teacher else "",
+            "updated_at": ws.grade.updated_at.isoformat(),
+        }
+
+    if not ws.scenario:
+        return {
+            "id": ws.id,
+            "name": ws.name,
+            "scenario": ws.scenario,
+            "mode": ws.mode,
+            "owner_id": ws.owner_id,
+            "graph": serialize(net),
+            "variables": None,
+            "context": {},
+            "grade": grade_out,
+        }
+
     spec = get_spec(ws.scenario)
     ctx_values = context_from_json(ws.context_json, net)
     variables = get_variable_info(spec, net, ws.mode)
@@ -122,15 +145,6 @@ def view_workspace(
     from ctmsn.core.concept import Concept
     for k, v in ctx_values.items():
         ctx_display[k] = v.id if isinstance(v, Concept) else v
-
-    grade_out = None
-    if ws.grade:
-        teacher = db.query(User).filter(User.id == ws.grade.teacher_id).first()
-        grade_out = {
-            "value": ws.grade.value,
-            "teacher_username": teacher.username if teacher else "",
-            "updated_at": ws.grade.updated_at.isoformat(),
-        }
 
     return {
         "id": ws.id,
