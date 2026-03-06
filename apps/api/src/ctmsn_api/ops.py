@@ -132,44 +132,44 @@ def run_ops(net, spec, derive: bool, mode: str | None = None, context_values: di
 
     out: dict[str, Any] = {"derivation": derivation}
 
+    conds = None
     if spec.conditions:
         sig = inspect.signature(spec.conditions)
         params = list(sig.parameters.keys())
-        if 'net' in params and 'mode' in params:
-            conds = spec.conditions(net, mode or "sun")
-        elif 'net' in params:
-            conds = spec.conditions(net)
-        elif 'mode' in params:
-            conds = spec.conditions(mode or "sun")
-        else:
-            conds = spec.conditions()
+        try:
+            if 'net' in params and 'mode' in params:
+                conds = spec.conditions(net, mode or "sun")
+            elif 'net' in params:
+                conds = spec.conditions(net)
+            elif 'mode' in params:
+                conds = spec.conditions(mode or "sun")
+            else:
+                conds = spec.conditions()
+        except KeyError:
+            conds = None
+
+    if conds is not None:
         out["check"] = str(eng.check(ctx, conds))
     else:
         out["check"] = None
 
-    if spec.goal and spec.conditions:
-        sig_conds = inspect.signature(spec.conditions)
-        params_conds = list(sig_conds.parameters.keys())
-        if 'net' in params_conds and 'mode' in params_conds:
-            conds = spec.conditions(net, mode or "sun")
-        elif 'net' in params_conds:
-            conds = spec.conditions(net)
-        elif 'mode' in params_conds:
-            conds = spec.conditions(mode or "sun")
-        else:
-            conds = spec.conditions()
-
+    goal = None
+    if spec.goal and conds is not None:
         sig_goal = inspect.signature(spec.goal)
         params_goal = list(sig_goal.parameters.keys())
-        if 'net' in params_goal and 'mode' in params_goal:
-            goal = spec.goal(net, mode or "sun")
-        elif 'net' in params_goal:
-            goal = spec.goal(net)
-        elif 'mode' in params_goal:
-            goal = spec.goal(mode or "sun")
-        else:
-            goal = spec.goal()
+        try:
+            if 'net' in params_goal and 'mode' in params_goal:
+                goal = spec.goal(net, mode or "sun")
+            elif 'net' in params_goal:
+                goal = spec.goal(net)
+            elif 'mode' in params_goal:
+                goal = spec.goal(mode or "sun")
+            else:
+                goal = spec.goal()
+        except KeyError:
+            goal = None
 
+    if goal is not None and conds is not None:
         out["forces"] = str(eng.forces(ctx, goal, conds))
         out["force"] = str(eng.force(ctx, goal, conds))
     else:

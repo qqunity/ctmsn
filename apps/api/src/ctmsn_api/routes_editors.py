@@ -43,10 +43,13 @@ def _get_var_map(ws: Workspace, db: Session) -> dict[str, Variable]:
             import inspect
             sig = inspect.signature(spec.variables)
             params = list(sig.parameters.keys())
-            if len(params) >= 1:
-                variables_result = spec.variables(st.net)
-            else:
-                variables_result = spec.variables()
+            try:
+                if len(params) >= 1:
+                    variables_result = spec.variables(st.net)
+                else:
+                    variables_result = spec.variables()
+            except KeyError:
+                return var_map
             vars_obj = variables_result[0]
             for attr_name in dir(vars_obj):
                 val = getattr(vars_obj, attr_name, None)
