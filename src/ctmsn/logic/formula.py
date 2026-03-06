@@ -40,3 +40,31 @@ class Or(Formula):
 class Implies(Formula):
     left: Formula
     right: Formula
+
+
+def collect_variables(f: Formula) -> frozenset:
+    from ctmsn.param.variable import Variable
+
+    result: set[Variable] = set()
+
+    def _collect(formula: Formula) -> None:
+        if isinstance(formula, FactAtom):
+            for a in formula.args:
+                if isinstance(a, Variable):
+                    result.add(a)
+        elif isinstance(formula, EqAtom):
+            if isinstance(formula.left, Variable):
+                result.add(formula.left)
+            if isinstance(formula.right, Variable):
+                result.add(formula.right)
+        elif isinstance(formula, Not):
+            _collect(formula.inner)
+        elif isinstance(formula, (And, Or)):
+            for item in formula.items:
+                _collect(item)
+        elif isinstance(formula, Implies):
+            _collect(formula.left)
+            _collect(formula.right)
+
+    _collect(f)
+    return frozenset(result)

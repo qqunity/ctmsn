@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from dataclasses import dataclass
 from typing import Callable, Iterable, Any
 
@@ -10,6 +11,9 @@ class Domain:
     def describe(self) -> str:
         return self.__class__.__name__
 
+    def enumerate_values(self) -> Iterable[Any]:
+        raise TypeError(f"{self.__class__.__name__} is not enumerable")
+
 
 @dataclass(frozen=True)
 class EnumDomain(Domain):
@@ -20,6 +24,9 @@ class EnumDomain(Domain):
 
     def describe(self) -> str:
         return f"Enum{self.values}"
+
+    def enumerate_values(self) -> Iterable[Any]:
+        return self.values
 
 
 @dataclass(frozen=True)
@@ -41,6 +48,15 @@ class RangeDomain(Domain):
         b1 = "[" if self.inclusive else "("
         b2 = "]" if self.inclusive else ")"
         return f"Range{b1}{self.min_value}, {self.max_value}{b2}"
+
+    def enumerate_values(self) -> Iterable[int]:
+        if self.inclusive:
+            lo = math.ceil(self.min_value)
+            hi = math.floor(self.max_value)
+        else:
+            lo = math.floor(self.min_value) + 1
+            hi = math.ceil(self.max_value) - 1
+        return range(lo, hi + 1)
 
 
 @dataclass(frozen=True)

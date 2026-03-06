@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from ctmsn.core.network import SemanticNetwork
 from ctmsn.param.context import Context
-from ctmsn.logic.formula import Formula, And
+from ctmsn.logic.formula import Formula, And, collect_variables
 from ctmsn.logic.tribool import TriBool
 from ctmsn.logic.evaluator import evaluate
 from ctmsn.forcing.conditions import Conditions
@@ -50,4 +50,22 @@ class ForcingEngine:
             return ForceResult(status=TriBool.TRUE, context=ctx, explanation="Already forced")
         if cur is TriBool.FALSE:
             return ForceResult(status=TriBool.FALSE, context=None, explanation="Conditions or phi are false")
-        return ForceResult(status=TriBool.UNKNOWN, context=None, explanation="Search not implemented yet")
+        all_vars = set(collect_variables(phi))
+        for cond in conditions.items:
+            all_vars |= set(collect_variables(cond))
+        unassigned = [v for v in all_vars if not ctx.is_assigned(v)]
+
+        try:
+            for assignment in strategy.candidates(ctx, unassigned):
+                extended = ctx.extend(assignment)
+                if self.forces(extended, phi, conditions) is TriBool.TRUE:
+                    return ForceResult(
+                        status=TriBool.TRUE,
+                        context=extended,
+                        explanation=f"Found assignment: {
+                            {v.name: val for v, val in assignment.items()}
+                        }",
+                    )
+            return ForceResult(status=TriBool.FALSE, context=None, explanation="No satisfying assignment found")
+        except ValueError as e:
+            return ForceResult(status=TriBool.UNKNOWN, context=None, explanation=str(e))
