@@ -132,6 +132,13 @@ export default function StudentWorkspacesPage() {
                 </div>
                 <span className="text-gray-500 text-xs">{w.scenario}{w.mode ? ` (${w.mode})` : ""}</span>
                 <p className="text-xs text-gray-400">{new Date(w.created_at).toLocaleString("ru")}</p>
+                <a
+                  href={`/teacher/workspace/${w.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs text-blue-600 hover:underline mt-1 inline-block"
+                >
+                  Открыть полный вид
+                </a>
               </button>
             ))}
           </div>

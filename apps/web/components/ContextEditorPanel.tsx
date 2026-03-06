@@ -19,9 +19,10 @@ type Props = {
   onActivate?: () => void;
   onHighlightsChange?: (h: ContextHighlights) => void;
   onContextsChange?: (contexts: NamedContextInfo[]) => void;
+  readOnly?: boolean;
 };
 
-export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlightsChange, onContextsChange }: Props) {
+export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlightsChange, onContextsChange, readOnly }: Props) {
   const [contexts, setContexts] = useState<NamedContextInfo[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -163,9 +164,11 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
               <span className={`shrink-0 px-1 rounded ${ctx.is_complete ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                 {ctx.assigned_vars}/{ctx.total_vars}
               </span>
-              <button onClick={() => handleDelete(ctx.id)} className="text-red-400 hover:text-red-600 shrink-0" title="Удалить">
-                &times;
-              </button>
+              {!readOnly && (
+                <button onClick={() => handleDelete(ctx.id)} className="text-red-400 hover:text-red-600 shrink-0" title="Удалить">
+                  &times;
+                </button>
+              )}
             </div>
 
             {expandedId === ctx.id && variables && (
@@ -179,7 +182,7 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
                         <select
                           value={String(currentValue)}
                           onChange={(e) => handleSetVariable(ctx.id, v.name, e.target.value || null)}
-                          disabled={loading}
+                          disabled={loading || readOnly}
                           className="border rounded px-1 py-0.5 text-xs flex-1 disabled:opacity-50"
                         >
                           <option value="">—</option>
@@ -194,7 +197,7 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
                           min={v.min}
                           max={v.max}
                           onChange={(e) => handleSetVariable(ctx.id, v.name, e.target.value)}
-                          disabled={loading}
+                          disabled={loading || readOnly}
                           className="border rounded px-1 py-0.5 text-xs flex-1 disabled:opacity-50"
                         />
                       ) : (
@@ -209,7 +212,7 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
                           onKeyDown={(e) => {
                             if (e.key === "Enter") handleSetVariable(ctx.id, v.name, (e.target as HTMLInputElement).value);
                           }}
-                          disabled={loading}
+                          disabled={loading || readOnly}
                           className="border rounded px-1 py-0.5 text-xs flex-1 disabled:opacity-50"
                         />
                       )}
@@ -234,7 +237,7 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
             Сравнить ({compareIds.size})
           </button>
         )}
-        {showCreate ? (
+        {!readOnly && (showCreate ? (
           <div className="flex-1 border rounded p-2 bg-gray-50 space-y-1">
             <input
               type="text"
@@ -266,7 +269,7 @@ export function ContextEditorPanel({ sessionId, variables, onActivate, onHighlig
           <button onClick={() => setShowCreate(true)} className="text-xs text-blue-600 hover:underline">
             + Новый контекст
           </button>
-        )}
+        ))}
       </div>
     </div>
   );

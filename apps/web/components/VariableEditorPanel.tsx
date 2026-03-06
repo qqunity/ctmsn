@@ -12,9 +12,10 @@ type Props = {
   graph: GraphPayload | null;
   onUpdate: (resp: LoadResponse) => void;
   onUserVariablesChange?: () => void;
+  readOnly?: boolean;
 };
 
-export function VariableEditorPanel({ variables, context, sessionId, graph, onUpdate, onUserVariablesChange }: Props) {
+export function VariableEditorPanel({ variables, context, sessionId, graph, onUpdate, onUserVariablesChange, readOnly }: Props) {
   const [loading, setLoading] = useState<string | null>(null);
   const [userVars, setUserVars] = useState<UserVariableInfo[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -87,7 +88,7 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
                     <select
                       value={String(currentValue)}
                       onChange={(e) => handleChange(v.name, e.target.value || null)}
-                      disabled={isLoading}
+                      disabled={isLoading || readOnly}
                       className="border rounded px-2 py-1 text-sm flex-1 disabled:opacity-50"
                     >
                       <option value="">—</option>
@@ -102,7 +103,7 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
                       min={v.min}
                       max={v.max}
                       onChange={(e) => handleChange(v.name, e.target.value)}
-                      disabled={isLoading}
+                      disabled={isLoading || readOnly}
                       className="border rounded px-2 py-1 text-sm flex-1 disabled:opacity-50"
                     />
                   ) : (
@@ -117,7 +118,7 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleChange(v.name, (e.target as HTMLInputElement).value);
                       }}
-                      disabled={isLoading}
+                      disabled={isLoading || readOnly}
                       className="border rounded px-2 py-1 text-sm flex-1 disabled:opacity-50"
                     />
                   )}
@@ -137,20 +138,22 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
               <div key={uv.id} className="flex items-center gap-2 text-xs">
                 <span className="text-gray-700 flex-1 truncate" title={uv.name}>{uv.name}</span>
                 <span className="text-gray-400">{uv.domain_type}</span>
-                <button
-                  onClick={() => uv.id && handleDelete(uv.id)}
-                  className="text-red-400 hover:text-red-600"
-                  title="Удалить"
-                >
-                  &times;
-                </button>
+                {!readOnly && (
+                  <button
+                    onClick={() => uv.id && handleDelete(uv.id)}
+                    className="text-red-400 hover:text-red-600"
+                    title="Удалить"
+                  >
+                    &times;
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {showCreate ? (
+      {!readOnly && (showCreate ? (
         <VariableCreateForm
           graph={graph}
           onSubmit={handleCreate}
@@ -163,7 +166,7 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
         >
           + Новая переменная
         </button>
-      )}
+      ))}
     </div>
   );
 }

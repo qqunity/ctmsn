@@ -12,6 +12,7 @@ type Props = {
   activeTermPickerId: string | null;
   onTermPickerFocus: (id: string | null) => void;
   onFormulasChange?: (formulas: FormulaInfo[]) => void;
+  readOnly?: boolean;
 };
 
 const RESULT_COLORS: Record<string, string> = {
@@ -20,7 +21,7 @@ const RESULT_COLORS: Record<string, string> = {
   unknown: "bg-yellow-100 text-yellow-700",
 };
 
-export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPickerId, onTermPickerFocus, onFormulasChange }: Props) {
+export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPickerId, onTermPickerFocus, onFormulasChange, readOnly }: Props) {
   const [formulas, setFormulas] = useState<FormulaInfo[]>([]);
   const [evalResults, setEvalResults] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -108,6 +109,7 @@ export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPick
               <div className="flex items-center gap-1 px-2 py-1">
                 <button
                   onClick={() => {
+                    if (readOnly) return;
                     if (isEditing) {
                       setEditingId(null);
                       setEditFormula(null);
@@ -117,7 +119,7 @@ export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPick
                       setEditFormula(f.formula);
                     }
                   }}
-                  className="flex-1 text-left hover:text-blue-600 truncate font-medium"
+                  className={`flex-1 text-left truncate font-medium ${readOnly ? "" : "hover:text-blue-600"}`}
                 >
                   {f.name}
                 </button>
@@ -129,9 +131,11 @@ export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPick
                 <button onClick={() => handleEvaluate(f.id)} className="text-blue-500 hover:text-blue-700" title="Вычислить">
                   &#9654;
                 </button>
-                <button onClick={() => handleDelete(f.id)} className="text-red-400 hover:text-red-600" title="Удалить">
-                  &times;
-                </button>
+                {!readOnly && (
+                  <button onClick={() => handleDelete(f.id)} className="text-red-400 hover:text-red-600" title="Удалить">
+                    &times;
+                  </button>
+                )}
               </div>
               {!isEditing && (
                 <div className="px-2 pb-1 text-[10px] text-gray-400 font-mono truncate">{f.text}</div>
@@ -164,7 +168,7 @@ export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPick
         })}
       </div>
 
-      {showNew ? (
+      {!readOnly && (showNew ? (
         <div className="border rounded p-2 bg-gray-50 space-y-2">
           <input
             type="text"
@@ -192,7 +196,7 @@ export function FormulaEditorPanel({ sessionId, graph, variables, activeTermPick
         <button onClick={() => setShowNew(true)} className="text-xs text-blue-600 hover:underline">
           + Новая формула
         </button>
-      )}
+      ))}
     </div>
   );
 }
