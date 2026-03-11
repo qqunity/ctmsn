@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { runForcingCheck, runForcingForces } from "@/lib/api";
+import { runForcingCheck, runForcingForces, runForcingForce } from "@/lib/api";
 import {
   FormulaInfo,
   NamedContextInfo,
   ForcingCheckResult,
   ForcingForcesResult,
+  ForcingForceResult,
   ForcingRunRecord,
 } from "@/lib/types";
 
@@ -79,10 +80,17 @@ export function ForcingPanel({ sessionId, formulas, contexts, scenarioCheck, sce
 
   const [checkResult, setCheckResult] = useState<ForcingCheckResult | null>(null);
   const [forcesResult, setForcesResult] = useState<ForcingForcesResult | null>(null);
+  const [forceResult, setForceResult] = useState<ForcingForceResult | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [history, setHistory] = useState<ForcingRunRecord[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Dynamic summary state — null means "use scenario defaults"
+  const [summaryCheck, setSummaryCheck] = useState<string | null>(null);
+  const [summaryForces, setSummaryForces] = useState<string | null>(null);
+  const [summaryForce, setSummaryForce] = useState<string | null>(null);
+  const [summaryOverridden, setSummaryOverridden] = useState(false);
 
   function toggleCondition(fid: string) {
     setSelectedConditions((prev) => {
@@ -112,6 +120,7 @@ export function ForcingPanel({ sessionId, formulas, contexts, scenarioCheck, sce
   async function handleCheck() {
     setLoading(true);
     setForcesResult(null);
+    setForceResult(null);
     try {
       const condIds = Array.from(selectedConditions);
       const res = await runForcingCheck(sessionId, {
@@ -119,6 +128,8 @@ export function ForcingPanel({ sessionId, formulas, contexts, scenarioCheck, sce
         condition_ids: condIds,
       });
       setCheckResult(res);
+      setSummaryCheck(res.ok ? "ok" : "fail");
+      setSummaryOverridden(true);
       const condNames = condIds.map((id) => formulas.find((f) => f.id === id)?.name ?? "?");
       addToHistory("check", res.ok ? "ok" : "false", condNames, null);
     } catch (e: any) {
@@ -131,6 +142,7 @@ export function ForcingPanel({ sessionId, formulas, contexts, scenarioCheck, sce
   async function handleForces() {
     setLoading(true);
     setCheckResult(null);
+    setForceResult(null);
     setShowExplanation(false);
     try {
       const condIds = Array.from(selectedConditions);
@@ -140,6 +152,34 @@ export function ForcingPanel({ sessionId, formulas, contexts, scenarioCheck, sce
         phi_id: phiId,
       });
       setForcesResult(res);
+      setSummaryCheck(res.conditions_ok ? "ok" : "fail");
+      setSummaryForces(res.result);
+      setSummaryOverridden(true);
+
+      // If result is unknown, automatically try force() to search for assignment
+      if (res.result === "unknown") {
+        try {
+          const forceRes = await runForcingForce(sessionId, {
+            context_id: contextId || null,
+            condition_ids: condIds,
+            phi_id: phiId,
+          });
+          setForceResult(forceRes);
+          setSummaryForce(forceRes.status);
+          // Append force result to explanation
+          const forceExplanation = forceRes.status === "true" && forceRes.extended_context
+            ? `Найдено расширение контекста: {${Object.entries(forceRes.extended_context).map(([k, v]) => `${k}=${v}`).join(", ")}}`
+            : forceRes.explanation ?? "Расширение контекста не найдено";
+          res.explanation = [...res.explanation, `force(): ${forceExplanation}`];
+          setForcesResult({ ...res });
+        } catch {
+          // force() failed — not critical
+          setSummaryForce(null);
+        }
+      } else {
+        setSummaryForce(null);
+      }
+
       const condNames = condIds.map((id) => formulas.find((f) => f.id === id)?.name ?? "?");
       addToHistory("forces", res.result, condNames, res.phi_name);
     } catch (e: any) {
@@ -153,32 +193,53 @@ export function ForcingPanel({ sessionId, formulas, contexts, scenarioCheck, sce
     <div>
       <h3 className="text-sm font-semibold mb-2">Форсирование</h3>
 
-      {/* Scenario run results */}
-      {(scenarioCheck || scenarioForces || scenarioForce) && (
-        <div className="mb-3 border rounded bg-gray-50 p-2">
-          <div className="text-xs font-medium text-gray-500 mb-1">Результат сценария</div>
-          <div className="space-y-1">
-            {scenarioCheck != null && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-12">check:</span>
-                {scenarioBadge(scenarioCheck, "check")}
-              </div>
-            )}
-            {scenarioForces != null && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-12">forces:</span>
-                {scenarioBadge(scenarioForces, "tribool")}
-              </div>
-            )}
-            {scenarioForce != null && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500 w-12">force:</span>
-                {scenarioBadge(scenarioForce, "tribool")}
-              </div>
-            )}
+      {/* Dynamic summary panel */}
+      <div className="mb-3 border rounded bg-gray-50 p-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-gray-500">
+            {summaryOverridden ? "Результат" : "Результат сценария"}
+          </span>
+          {summaryOverridden && (
+            <button
+              onClick={() => {
+                setSummaryCheck(null);
+                setSummaryForces(null);
+                setSummaryForce(null);
+                setSummaryOverridden(false);
+              }}
+              className="text-[10px] text-blue-500 hover:underline"
+            >
+              сбросить
+            </button>
+          )}
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500 w-12">check:</span>
+            {summaryOverridden
+              ? summaryCheck
+                ? scenarioBadge(summaryCheck === "ok" ? "ok" : "CheckResult(ok=False)", "check")
+                : <span className="text-xs text-gray-400">—</span>
+              : scenarioBadge(scenarioCheck, "check")}
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500 w-12">forces:</span>
+            {summaryOverridden
+              ? summaryForces
+                ? scenarioBadge(`TriBool.${summaryForces.toUpperCase()}`, "tribool")
+                : <span className="text-xs text-gray-400">—</span>
+              : scenarioBadge(scenarioForces, "tribool")}
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500 w-12">force:</span>
+            {summaryOverridden
+              ? summaryForce
+                ? scenarioBadge(`TriBool.${summaryForce.toUpperCase()}`, "tribool")
+                : <span className="text-xs text-gray-400">—</span>
+              : scenarioBadge(scenarioForce, "tribool")}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Context selector */}
       <div className="mb-2">

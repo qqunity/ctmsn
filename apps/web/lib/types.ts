@@ -227,6 +227,12 @@ export type BugReportInfo = {
   created_at: string;
 };
 
+export type ForcingForceResult = {
+  status: "true" | "false" | "unknown";
+  explanation: string | null;
+  extended_context: Record<string, any> | null;
+};
+
 export type ForcingRunRecord = {
   id: string;
   timestamp: string;

@@ -19,6 +19,7 @@ import {
   ContextHighlights,
   ForcingCheckResult,
   ForcingForcesResult,
+  ForcingForceResult,
   CascadeInfo,
   HistoryStatus,
   UndoRedoResponse,
@@ -423,6 +424,18 @@ export async function runForcingForces(
   req: { context_id?: string | null; condition_ids: string[]; phi_id: string },
 ): Promise<ForcingForcesResult> {
   const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/forcing/forces`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  return ensureOk(r);
+}
+
+export async function runForcingForce(
+  workspaceId: string,
+  req: { context_id?: string | null; condition_ids: string[]; phi_id: string },
+): Promise<ForcingForceResult> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/forcing/force`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),

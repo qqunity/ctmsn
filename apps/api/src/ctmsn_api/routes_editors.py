@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ctmsn.core.concept import Concept
+from ctmsn.forcing.conditions import Conditions
+from ctmsn.forcing.engine import ForcingEngine
 from ctmsn.logic.evaluator import evaluate
 from ctmsn.param.context import Context
 from ctmsn.param.domain import EnumDomain, PredicateDomain, RangeDomain
@@ -818,4 +820,76 @@ def forcing_forces(
         conditions_ok=conditions_ok,
         conditions=conditions,
         explanation=explanation,
+    ).model_dump()
+
+
+class ForcingForceReq(BaseModel):
+    context_id: Optional[str] = None
+    condition_ids: list[str]
+    phi_id: str
+
+
+class ForcingForceResp(BaseModel):
+    status: str  # "true" | "false" | "unknown"
+    explanation: Optional[str] = None
+    extended_context: Optional[dict] = None
+
+
+@router.post("/api/workspaces/{wid}/forcing/force")
+def forcing_force(
+    wid: str,
+    req: ForcingForceReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = _check_workspace(wid, user, db)
+    net, ctx, var_map = _build_forcing_context(ws, wid, req.context_id, db)
+
+    # Build conditions
+    cond_formulas = []
+    for cid in req.condition_ids:
+        rec = db.query(FormulaRecord).filter(
+            FormulaRecord.id == cid, FormulaRecord.workspace_id == wid
+        ).first()
+        if not rec:
+            continue
+        formula_data = json.loads(rec.formula_json)
+        try:
+            f = formula_from_json(formula_data, net, var_map)
+            cond_formulas.append(f)
+        except Exception:
+            pass
+
+    conditions = Conditions()
+    if cond_formulas:
+        conditions = conditions.add(*cond_formulas)
+
+    # Build phi
+    phi_rec = db.query(FormulaRecord).filter(
+        FormulaRecord.id == req.phi_id, FormulaRecord.workspace_id == wid
+    ).first()
+    if not phi_rec:
+        raise HTTPException(status_code=404, detail="Target formula not found")
+
+    phi_data = json.loads(phi_rec.formula_json)
+    try:
+        phi_f = formula_from_json(phi_data, net, var_map)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid target formula")
+
+    # Run force()
+    engine = ForcingEngine(net)
+    force_result = engine.force(ctx, phi_f, conditions)
+
+    # Serialize extended context
+    extended_ctx = None
+    if force_result.context is not None:
+        extended_ctx = {}
+        for var_name, val in force_result.context.as_dict().items():
+            extended_ctx[var_name] = val.id if isinstance(val, Concept) else str(val)
+
+    return ForcingForceResp(
+        status=force_result.status.value,
+        explanation=force_result.explanation,
+        extended_context=extended_ctx,
     ).model_dump()
