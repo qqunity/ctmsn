@@ -9,6 +9,7 @@
 - [Базовый пример](#базовый-пример)
 - [Ключевые API](#ключевые-api)
 - [Сценарии](#сценарии)
+- [Лабораторные работы](#лабораторные-работы)
 - [Запуск локального UI](#запуск-локального-ui)
 - [Тестирование](#тестирование)
 - [Практические рекомендации](#практические-рекомендации)
@@ -77,7 +78,13 @@ if check.ok and value == TriBool.TRUE:
 ### `ForcingEngine`
 - `check(ctx, conditions)` — проверка ограничений
 - `forces(ctx, phi, conditions)` — вычисление `TriBool`
-- `force(ctx, phi, conditions)` — попытка форсирования (поиск расширений пока не реализован полностью)
+- `force(ctx, phi, conditions, strategy)` — поиск расширения контекста для форсирования формулы
+
+### `BruteEnumStrategy`
+- Стратегия полного перебора для `force()`
+- Перебирает декартово произведение доменов неприсвоенных переменных
+- `max_branch=2000` — лимит пространства поиска
+- Переменные с `PredicateDomain` пропускаются (домен не перечислим)
 
 ### `TriBool`
 - `TriBool.TRUE`
@@ -102,6 +109,8 @@ else:
 - `time_process`
 - `fishing`
 - `spawn`
+- `lab1_university`
+- `lab3_formulas`
 
 Примеры запуска:
 
@@ -118,6 +127,14 @@ python3 src/ctmsn/examples/spawn_demo.py
 - [FISHING_IMPLEMENTATION.md](FISHING_IMPLEMENTATION.md)
 - [SPAWN_IMPLEMENTATION.md](SPAWN_IMPLEMENTATION.md)
 - [Руководство по сценариям](src/ctmsn/scenarios/README.md)
+
+## Лабораторные работы
+
+Инструкции к лабораторным работам:
+- [ЛР 1: Построение семантической сети](docs/LAB1_UNIVERSITY_INSTRUCTION.md)
+- [ЛР 2: Анализ сценариев](docs/LAB2_SCENARIOS_INSTRUCTION.md)
+- [ЛР 3: Формулы и трёхзначная логика](docs/LAB3_FORMULAS_INSTRUCTION.md)
+- [ЛР 4: Параметризация, условия, форсинг](docs/LAB4_FORCING_INSTRUCTION.md)
 
 ## Запуск локального UI
 
@@ -143,6 +160,7 @@ make clean
 ```bash
 python3 tests/test_smoke_imports.py
 python3 tests/test_fast_smith.py
+python3 tests/test_force_search.py
 python3 -m pytest tests/scenarios/test_spawn_builds.py
 python3 -m pytest tests/scenarios/test_time_process_derivation.py
 ```

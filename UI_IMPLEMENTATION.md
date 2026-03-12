@@ -15,8 +15,8 @@
 
 ## Архитектура
 
-- `apps/api` — FastAPI API, хранение workspace-состояний, auth, teacher-функции
-- `apps/web` — Next.js клиент, графовая визуализация, редакторы сущностей, формул, переменных и контекстов
+- `apps/api` — FastAPI API, хранение workspace-состояний, auth, teacher-функции, баг-репорты, оценки
+- `apps/web` — Next.js клиент, графовая визуализация, редакторы сущностей, формул, переменных и контекстов, форсинг-панель, справочная система
 - `src/ctmsn` — библиотечное ядро (сценарии, логика, форсинг)
 
 ## Запуск
@@ -53,14 +53,34 @@ make dev-web
 - История изменений (`undo/redo`)
 
 ### Редакторы
-- Граф: концепты, предикаты, факты
-- Формулы: CRUD и вычисление
-- Переменные: CRUD и домены
+- Граф: концепты, предикаты, факты; ID концептов отображаются на узлах
+- Формулы: CRUD и вычисление в трёхзначной логике
+- Переменные: CRUD, домены, возможность сброса присвоенного значения
 - Контексты: CRUD, активация, сравнение, highlights
-- Панель forcing: `check`, `forces`, `force`
+- Панель forcing: `check`, `forces`, `force` с отображением расширенного контекста
+
+### Панель статистики сети
+- Количество концептов, предикатов, фактов, уравнений
+
+### Справочная система
+- Описания заданий для каждого сценария
+- Глоссарий (Концепт, Предикат, Факт, Домен, Переменная, Контекст, Формула, Форсинг)
+- Таблицы истинности для трёхзначной логики (NOT, AND, OR, IMPLIES)
+- Подсказки для элементов интерфейса
+
+### Панель преподавателя
+- Список студентов с количеством workspace
+- Просмотр workspace студента (read-only): граф, переменные, контексты, формулы, форсинг, уравнения
+- Имя workspace вместо сценария в списке студентов
+- Оценки: выставление (1–10), удаление, цветовая индикация
+- Комментарии к workspace
+
+### Система баг-репортов
+- Форма отправки: заголовок, описание, привязка к workspace, загрузка скриншота
+- Панель управления для преподавателя: фильтрация (все/открытые/закрытые), смена статуса, удаление, просмотр скриншотов
 
 ### Визуализация
-- Граф на Cytoscape
+- Граф на Cytoscape с ID концептов на узлах
 - Панели статуса, деталей, формул, переменных и контекстов
 - Help panel и teacher panel
 
@@ -75,32 +95,59 @@ make dev-web
 - `/api/workspaces/{wid}/formulas*` — редактор формул
 - `/api/workspaces/{wid}/variables*` — редактор переменных
 - `/api/workspaces/{wid}/contexts*` — редактор контекстов
-- `/api/workspaces/{wid}/forcing/*` — forcing API
-- `/api/teacher/*` — teacher API
+- `/api/workspaces/{wid}/forcing/*` — forcing API (`check`, `forces`, `force`)
+- `/api/teacher/*` — teacher API (студенты, workspace, оценки, комментарии)
+- `/api/bugs*` — баг-репорты (создание, просмотр, управление)
 
 ## Структура приложений
 
 ```text
 apps/
 ├── api/
+│   ├── Dockerfile
 │   └── src/ctmsn_api/
 │       ├── app.py
+│       ├── config.py
+│       ├── database.py
+│       ├── models.py
 │       ├── routes_auth.py
 │       ├── routes_editors.py
 │       ├── routes_teacher.py
+│       ├── routes_bugs.py
 │       ├── sessions.py
 │       ├── registry.py
 │       ├── ops.py
 │       └── serialize.py
 └── web/
+    ├── Dockerfile
     ├── app/
     │   ├── login/page.tsx
     │   ├── register/page.tsx
     │   ├── workspaces/page.tsx
     │   ├── workspace/[id]/page.tsx
     │   └── teacher/
+    │       ├── page.tsx
+    │       ├── bugs/page.tsx
+    │       ├── student/[id]/page.tsx
+    │       └── workspace/[id]/page.tsx
     ├── components/
+    │   ├── BugReportForm.tsx
+    │   ├── ContextEditorPanel.tsx
+    │   ├── EquationsPanel.tsx
+    │   ├── ForcingPanel.tsx
+    │   ├── FormulaEditorPanel.tsx
+    │   ├── GradePanel.tsx
+    │   ├── GraphView.tsx
+    │   ├── HelpPanel.tsx
+    │   ├── NetworkStatsPanel.tsx
+    │   ├── ScenarioBar.tsx
+    │   ├── VariableEditorPanel.tsx
+    │   ├── VariablesPanel.tsx
+    │   └── WorkspaceList.tsx
     └── lib/
+        ├── api.ts
+        ├── helpContent.ts
+        └── types.ts
 ```
 
 ## Тестирование
@@ -117,9 +164,21 @@ make test-e2e
 - `tests/e2e_workspace_mgmt.py`
 - `tests/e2e_network_editor.py`
 - `tests/e2e_forcing.py`
+- `tests/e2e_forcing_scenario_results.py`
 - `tests/e2e_editors.py`
 - `tests/e2e_help_panel.py`
+- `tests/e2e_help_panel_scenario.py`
 - `tests/e2e_teacher.py`
+- `tests/e2e_teacher_readonly_workspace.py`
+- `tests/e2e_teacher_workspace_names.py`
+- `tests/e2e_grades.py`
+- `tests/e2e_grade_display.py`
+- `tests/e2e_bug_reports.py`
+- `tests/e2e_lab1_university.py`
+- `tests/e2e_lab2.py`
+- `tests/e2e_lab3_formulas.py`
+- `tests/e2e_unset_variable.py`
+- `tests/e2e_graph_labels_panel.py`
 
 ## Troubleshooting
 

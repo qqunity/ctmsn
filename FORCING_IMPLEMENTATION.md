@@ -357,7 +357,7 @@ else:
 
 ### 3. force() — Расширение контекста
 
-Пытается расширить контекст так, чтобы формула стала истинной:
+Расширяет контекст так, чтобы формула стала истинной, перебирая допустимые присваивания через стратегию поиска:
 
 ```python
 def force(
@@ -370,36 +370,32 @@ def force(
     ...
 ```
 
-**Алгоритм (текущая реализация — skeleton):**
+**Алгоритм:**
 
 ```python
 strategy = strategy or BruteEnumStrategy()
 
-# 1. Проверить текущий статус
 cur = self.forces(ctx, phi, conditions)
-
-# 2. Если уже форсирует — вернуть как есть
 if cur is TriBool.TRUE:
-    return ForceResult(
-        status=TriBool.TRUE,
-        context=ctx,
-        explanation="Already forced"
-    )
-
-# 3. Если противоречие — невозможно форсировать
+    return ForceResult(status=TriBool.TRUE, context=ctx, explanation="Already forced")
 if cur is TriBool.FALSE:
-    return ForceResult(
-        status=TriBool.FALSE,
-        context=None,
-        explanation="Conditions or phi are false"
-    )
+    return ForceResult(status=TriBool.FALSE, context=None, explanation="Conditions or phi are false")
 
-# 4. Если неопределено — нужен поиск (пока не реализован)
-return ForceResult(
-    status=TriBool.UNKNOWN,
-    context=None,
-    explanation="Search not implemented yet"
-)
+all_vars = collect_variables(phi) | collect_variables(conditions)
+unassigned = [v for v in all_vars if not ctx.is_assigned(v)]
+
+try:
+    for assignment in strategy.candidates(ctx, unassigned):
+        extended = ctx.extend(assignment)
+        if self.forces(extended, phi, conditions) is TriBool.TRUE:
+            return ForceResult(
+                status=TriBool.TRUE,
+                context=extended,
+                explanation=f"Found assignment: {assignment}",
+            )
+    return ForceResult(status=TriBool.FALSE, context=None, explanation="No satisfying assignment found")
+except ValueError as e:
+    return ForceResult(status=TriBool.UNKNOWN, context=None, explanation=str(e))
 ```
 
 **Результат:**
@@ -416,18 +412,17 @@ class ForceResult:
 
 | status | context | explanation | Значение |
 |--------|---------|-------------|----------|
-| `TRUE` | ctx | "Already forced" | Формула уже истинна |
-| `FALSE` | None | "Conditions or phi are false" | Невозможно форсировать |
-| `UNKNOWN` | None | "Search not implemented yet" | Поиск не реализован |
-| `TRUE` | new_ctx | "Found extension" | Найдено расширение (будущее) |
-| `FALSE` | None | "No valid extension exists" | Расширений не существует (будущее) |
+| `TRUE` | ctx | "Already forced" | Формула уже истинна в текущем контексте |
+| `FALSE` | None | "Conditions or phi are false" | Условия или формула ложны |
+| `TRUE` | new_ctx | "Found assignment: {...}" | Найдено расширение контекста |
+| `FALSE` | None | "No satisfying assignment found" | Ни одно присваивание не подходит |
+| `UNKNOWN` | None | "Search space N exceeds max_branch=2000" | Пространство поиска слишком велико |
 
 **Пример:**
 
 ```python
 engine = ForcingEngine(net)
 
-# Попытаться форсировать доступ
 result = engine.force(ctx, phi, conditions)
 
 if result.status == TriBool.TRUE:
@@ -442,7 +437,7 @@ else:
 
 ## Стратегии поиска
 
-### Текущая реализация (Skeleton)
+### Реализованная стратегия: BruteEnumStrategy
 
 ```python
 class Strategy:
@@ -459,30 +454,37 @@ class BruteEnumStrategy(Strategy):
     max_branch: int = 2000
 
     def candidates(self, ctx, vars_to_assign):
-        yield {}  # Пока ничего не генерирует
+        enumerable = [v for v in vars_to_assign if not isinstance(v.domain, PredicateDomain)]
+        if not enumerable:
+            return
+
+        domains = [list(v.domain.enumerate_values()) for v in enumerable]
+
+        total = 1
+        for d in domains:
+            total *= len(d)
+            if total > self.max_branch:
+                raise ValueError(f"Search space {total} exceeds max_branch={self.max_branch}")
+
+        for combo in itertools.product(*domains):
+            yield dict(zip(enumerable, combo))
 ```
 
-**Статус:** Заглушка. Возвращает пустое расширение.
-
-### Будущие стратегии
-
-#### 1. Полный перебор (Brute Force)
-
-```python
-class BruteEnumStrategy(Strategy):
-    def candidates(self, ctx, vars_to_assign):
-        # Генерировать все комбинации значений
-        for assignment in product(*[var.domain.values for var in vars_to_assign]):
-            yield dict(zip(vars_to_assign, assignment))
-```
+**Алгоритм:**
+1. Отфильтровать переменные с `PredicateDomain` (домен не перечислим)
+2. Собрать значения доменов для оставшихся переменных
+3. Проверить размер пространства поиска — при превышении `max_branch` выбросить `ValueError`
+4. Перебрать декартово произведение доменов через `itertools.product`
 
 **Сложность:** O(|D₁| × |D₂| × ... × |Dₙ|), где Dᵢ — домен i-й переменной
 
-**Подходит для:**
-- Маленьких доменов (< 10 значений)
-- Небольшого числа переменных (< 5)
+**Ограничения:**
+- `max_branch=2000` по умолчанию — при превышении `force()` возвращает `UNKNOWN`
+- Переменные с `PredicateDomain` пропускаются
 
-#### 2. Поиск в глубину (DFS)
+### Будущие стратегии
+
+#### 1. Поиск в глубину (DFS)
 
 ```python
 class DFSStrategy(Strategy):
@@ -556,7 +558,6 @@ if engine.forces(ctx, phi, conditions) == TriBool.TRUE:
 ### Сценарий 2: Поиск допустимого назначения
 
 ```python
-# Найти подходящего исполнителя для задачи
 engine = ForcingEngine(net)
 
 conditions = Conditions().add(
@@ -566,13 +567,15 @@ conditions = Conditions().add(
 
 phi = FactAtom("can_perform", (worker, task))
 
-# Пока что вернёт UNKNOWN (поиск не реализован)
 result = engine.force(empty_ctx, phi, conditions)
 
-# В будущем: найдёт worker, удовлетворяющего условиям
 if result.status == TriBool.TRUE:
     assigned_worker = result.context.get(worker_var)
     print(f"Назначен: {assigned_worker}")
+elif result.status == TriBool.FALSE:
+    print(f"Подходящий исполнитель не найден: {result.explanation}")
+else:
+    print(f"Неопределено: {result.explanation}")
 ```
 
 ### Сценарий 3: Валидация конфигурации
@@ -637,11 +640,11 @@ result = engine.forces(ctx, phi, conditions)
 
 ### Текущие ограничения
 
-1. **Поиск не реализован** — `force()` не умеет расширять контекст
+1. **Только полный перебор** — `BruteEnumStrategy` не использует эвристик и отсечений
 2. **Нет кэширования** — формулы пересчитываются каждый раз
 3. **Нет индексов** — поиск фактов линейный
-4. **Нет объяснений** — explanation минимальны
-5. **Нет кванторов** — только пропозициональная логика с переменными
+4. **Нет кванторов** — только пропозициональная логика с переменными
+5. **PredicateDomain не перечислим** — переменные с таким доменом не участвуют в поиске
 
 ### Возможные улучшения
 
@@ -934,30 +937,18 @@ phi = And((
 **Текущие возможности:**
 - Проверка условий (`check`)
 - Проверка форсирования (`forces`)
-- Базовое расширение контекста (`force` — skeleton)
+- Расширение контекста (`force`) с `BruteEnumStrategy` (полный перебор)
 - Трёхзначная логика (TRUE/FALSE/UNKNOWN)
 - Набор формул (FactAtom, Not, And, Or, Implies, EqAtom)
 - Композиция условий
+- API-endpoint `POST /api/workspaces/{wid}/forcing/force` для вызова `force()` из UI
 
 **Направления развития:**
-- Стратегии поиска (BFS, DFS, эвристики)
+- Стратегии поиска с отсечением (DFS, эвристики)
 - Кэширование и индексирование
-- Детальные объяснения (explanation)
 - Кванторы (∀, ∃)
 - Constraint propagation
 - Параллельный поиск
-
-**Готово к использованию для:**
-- Проверки валидности контекстов
-- Верификации логических утверждений
-- Демонстрации концепций форсинга
-- Обучения семантическим сетям
-
----
-
-**Дата документации:** 19 февраля 2026  
-**Версия библиотеки:** CTMSN 0.1.0  
-**Python:** 3.9+
 
 ---
 
