@@ -81,3 +81,12 @@ def init_registry() -> None:
         register(ScenarioSpec("lab3_formulas", build_lab3, None, goal_lab3, conds_lab3, variables=vars_lab3))
     except Exception:
         pass
+
+    try:
+        from ctmsn.scenarios.lab5_inheritance.model import build_network as build_lab5
+        from ctmsn.scenarios.lab5_inheritance.goal import build_goal as goal_lab5
+        from ctmsn.scenarios.lab5_inheritance.constraints import build_conditions as conds_lab5
+        from ctmsn.scenarios.lab5_inheritance.params import build_variables as vars_lab5
+        register(ScenarioSpec("lab5_inheritance", build_lab5, None, goal_lab5, conds_lab5, variables=vars_lab5))
+    except Exception:
+        pass
