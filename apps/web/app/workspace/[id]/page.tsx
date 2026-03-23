@@ -401,10 +401,10 @@ export default function WorkspacePage() {
           <div className="space-y-4">
             <NetworkStatsPanel graph={data?.graph ?? null} />
             <StatusPanel data={data} />
-            {data?.variables && data.variables.length > 0 && (
+            {sessionId && (
               <VariableEditorPanel
-                variables={data.variables}
-                context={data.context ?? {}}
+                variables={data?.variables ?? []}
+                context={data?.context ?? {}}
                 sessionId={sessionId}
                 graph={data?.graph ?? null}
                 onUpdate={handleVariableUpdate}

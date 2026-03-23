@@ -134,21 +134,65 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
         <div className="mb-3">
           <div className="text-xs text-gray-400 mb-1">Пользовательские</div>
           <div className="space-y-1">
-            {userVars.map((uv) => (
-              <div key={uv.id} className="flex items-center gap-2 text-xs">
-                <span className="text-gray-700 flex-1 truncate" title={uv.name}>{uv.name}</span>
-                <span className="text-gray-400">{uv.domain_type}</span>
-                {!readOnly && (
-                  <button
-                    onClick={() => uv.id && handleDelete(uv.id)}
-                    className="text-red-400 hover:text-red-600"
-                    title="Удалить"
-                  >
-                    &times;
-                  </button>
-                )}
-              </div>
-            ))}
+            {userVars.map((uv) => {
+              const currentValue = context[uv.name] ?? "";
+              const isLoading = loading === uv.name;
+              return (
+                <div key={uv.id} className="flex items-center gap-2">
+                  <label className="text-xs text-gray-600 w-20 shrink-0 truncate" title={uv.name}>
+                    {uv.name}
+                  </label>
+                  {uv.domain_type === "enum" && uv.values ? (
+                    <select
+                      value={String(currentValue)}
+                      onChange={(e) => handleChange(uv.name, e.target.value || null)}
+                      disabled={isLoading || readOnly}
+                      className="border rounded px-2 py-1 text-sm flex-1 disabled:opacity-50"
+                    >
+                      <option value="">—</option>
+                      {uv.values.map((val) => (
+                        <option key={val} value={val}>{val}</option>
+                      ))}
+                    </select>
+                  ) : uv.domain_type === "range" ? (
+                    <input
+                      type="number"
+                      value={String(currentValue)}
+                      min={uv.min}
+                      max={uv.max}
+                      onChange={(e) => handleChange(uv.name, e.target.value)}
+                      disabled={isLoading || readOnly}
+                      className="border rounded px-2 py-1 text-sm flex-1 disabled:opacity-50"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={String(currentValue)}
+                      onBlur={(e) => {
+                        if (e.target.value !== String(currentValue)) {
+                          handleChange(uv.name, e.target.value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleChange(uv.name, (e.target as HTMLInputElement).value);
+                      }}
+                      disabled={isLoading || readOnly}
+                      className="border rounded px-2 py-1 text-sm flex-1 disabled:opacity-50"
+                    />
+                  )}
+                  {isLoading && <span className="text-xs text-gray-400">...</span>}
+                  {!readOnly && (
+                    <button
+                      onClick={() => uv.id && handleDelete(uv.id)}
+                      className="text-red-400 hover:text-red-600 text-sm"
+                      title="Удалить"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

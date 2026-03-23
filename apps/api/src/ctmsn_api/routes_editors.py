@@ -282,15 +282,22 @@ class VariableUpdateReq(BaseModel):
 
 
 def _serialize_user_variable(uv: UserVariable) -> dict:
-    return {
+    domain = json.loads(uv.domain_json)
+    result = {
         "id": uv.id,
         "name": uv.name,
         "type_tag": uv.type_tag,
         "domain_type": uv.domain_type,
-        "domain": json.loads(uv.domain_json),
+        "domain": domain,
         "origin": "user",
         "created_at": uv.created_at.isoformat() if uv.created_at else None,
     }
+    if uv.domain_type == "enum":
+        result["values"] = domain.get("values", [])
+    elif uv.domain_type == "range":
+        result["min"] = domain.get("min")
+        result["max"] = domain.get("max")
+    return result
 
 
 @router.post("/api/workspaces/{wid}/variables")
