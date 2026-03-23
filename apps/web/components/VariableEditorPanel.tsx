@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { setVariable, listAllVariables, createVariable, deleteVariable } from "@/lib/api";
+import { setVariable, listAllVariables, createVariable, updateVariable, deleteVariable } from "@/lib/api";
 import { VariableInfo, UserVariableInfo, LoadResponse, GraphPayload } from "@/lib/types";
 import { VariableCreateForm } from "./VariableCreateForm";
+import { VariableEditForm } from "./VariableEditForm";
 
 type Props = {
   variables: VariableInfo[];
@@ -19,6 +20,7 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
   const [loading, setLoading] = useState<string | null>(null);
   const [userVars, setUserVars] = useState<UserVariableInfo[]>([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [editingVarId, setEditingVarId] = useState<string | null>(null);
 
   const fetchUserVars = useCallback(async () => {
     try {
@@ -63,6 +65,17 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
       onUserVariablesChange?.();
     } catch (e: any) {
       alert(e.message || "Error deleting variable");
+    }
+  }
+
+  async function handleEdit(id: string, data: { name?: string; type_tag?: string; domain_type?: string; domain?: Record<string, any> }) {
+    try {
+      await updateVariable(sessionId, id, data);
+      setEditingVarId(null);
+      await fetchUserVars();
+      onUserVariablesChange?.();
+    } catch (e: any) {
+      alert(e.message || "Error updating variable");
     }
   }
 
@@ -135,6 +148,17 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
           <div className="text-xs text-gray-400 mb-1">Пользовательские</div>
           <div className="space-y-1">
             {userVars.map((uv) => {
+              if (editingVarId === uv.id) {
+                return (
+                  <VariableEditForm
+                    key={uv.id}
+                    variable={uv}
+                    graph={graph}
+                    onSubmit={(data) => uv.id && handleEdit(uv.id, data)}
+                    onCancel={() => setEditingVarId(null)}
+                  />
+                );
+              }
               const currentValue = context[uv.name] ?? "";
               const isLoading = loading === uv.name;
               return (
@@ -182,13 +206,22 @@ export function VariableEditorPanel({ variables, context, sessionId, graph, onUp
                   )}
                   {isLoading && <span className="text-xs text-gray-400">...</span>}
                   {!readOnly && (
-                    <button
-                      onClick={() => uv.id && handleDelete(uv.id)}
-                      className="text-red-400 hover:text-red-600 text-sm"
-                      title="Удалить"
-                    >
-                      &times;
-                    </button>
+                    <>
+                      <button
+                        onClick={() => uv.id && setEditingVarId(uv.id)}
+                        className="text-gray-400 hover:text-yellow-600 text-sm"
+                        title="Редактировать"
+                      >
+                        &#9998;
+                      </button>
+                      <button
+                        onClick={() => uv.id && handleDelete(uv.id)}
+                        className="text-red-400 hover:text-red-600 text-sm"
+                        title="Удалить"
+                      >
+                        &times;
+                      </button>
+                    </>
                   )}
                 </div>
               );
