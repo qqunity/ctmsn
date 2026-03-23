@@ -26,7 +26,14 @@ def evaluate(formula: Formula, net: SemanticNetwork, ctx: Context) -> TriBool:
                 return TriBool.UNKNOWN
             resolved_args.append(v)
 
-        for f in net.facts(formula.predicate):
+        # "lacks_X" predicates are evaluated as negation of "has_X"
+        predicate = formula.predicate
+        negate = False
+        if predicate.startswith("lacks_"):
+            predicate = "has_" + predicate[len("lacks_"):]
+            negate = True
+
+        for f in net.facts(predicate):
             if len(f.args) != len(resolved_args):
                 continue
             ok = True
@@ -38,8 +45,8 @@ def evaluate(formula: Formula, net: SemanticNetwork, ctx: Context) -> TriBool:
                     if fa != ra:
                         ok = False; break
             if ok:
-                return TriBool.TRUE
-        return TriBool.FALSE
+                return TriBool.FALSE if negate else TriBool.TRUE
+        return TriBool.TRUE if negate else TriBool.FALSE
 
     if isinstance(formula, EqAtom):
         l_s, l = _resolve_term(formula.left, ctx)

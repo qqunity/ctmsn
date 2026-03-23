@@ -60,7 +60,7 @@ export default function WorkspacePage() {
     (async () => {
       const s = await listScenarios();
       setScenarios(s);
-      if (s.length) setScenario(s[0].name);
+      if (s.length) setScenario((prev) => prev || s[0].name);
     })();
   }, []);
 
