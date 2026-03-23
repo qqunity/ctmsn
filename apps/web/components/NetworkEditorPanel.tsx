@@ -517,7 +517,7 @@ export function NetworkEditorPanel({
             <div className="border-t pt-2 mt-2">
               <div className="text-xs text-zinc-500 mb-1">Существующие факты:</div>
               <div className="max-h-40 overflow-auto space-y-1">
-                {edges.filter((e) => e.kind === "edge").map((e) => (
+                {edges.filter((e) => e.kind !== "derived").map((e) => (
                   <div key={e.id} className="flex items-center gap-1 text-xs bg-zinc-50 rounded px-2 py-1">
                     <span className="flex-1 truncate">{e.label}({e.source}, {e.target})</span>
                     <button
