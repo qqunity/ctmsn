@@ -10,29 +10,34 @@ from ctmsn.forcing.engine import ForcingEngine
 
 def _build_context(variables_result: tuple | None, context_values: dict[str, Any] | None) -> Context:
     ctx = Context()
-    if variables_result is None or context_values is None:
-        if variables_result is not None and len(variables_result) >= 2:
-            return variables_result[1]
-        return ctx
 
-    vars_obj = variables_result[0]
-    var_map: dict[str, Variable] = {}
-    for attr_name in dir(vars_obj):
-        val = getattr(vars_obj, attr_name, None)
-        if isinstance(val, Variable):
-            var_map[val.name] = val
+    if variables_result is not None and len(variables_result) >= 2:
+        default_ctx = variables_result[1]
+        vars_obj = variables_result[0]
+        var_map: dict[str, Variable] = {}
+        for attr_name in dir(vars_obj):
+            val = getattr(vars_obj, attr_name, None)
+            if isinstance(val, Variable):
+                var_map[val.name] = val
 
-    default_ctx = variables_result[1] if len(variables_result) >= 2 else Context()
-    for k, v in default_ctx.as_dict().items():
-        if k in var_map:
-            ctx.set(var_map[k], v)
-
-    for k, v in context_values.items():
-        if k in var_map:
-            try:
+        for k, v in default_ctx.as_dict().items():
+            if k in var_map:
                 ctx.set(var_map[k], v)
-            except ValueError:
-                pass
+
+        if context_values:
+            for k, v in context_values.items():
+                if k in var_map:
+                    try:
+                        ctx.set(var_map[k], v)
+                    except ValueError:
+                        pass
+                else:
+                    # User-created variable: already validated in set_variable
+                    ctx._values[k] = v
+    elif context_values:
+        # No scenario variables, but user variables may have values
+        for k, v in context_values.items():
+            ctx._values[k] = v
 
     return ctx
 

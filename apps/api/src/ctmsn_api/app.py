@@ -221,31 +221,18 @@ def set_variable(
         if req.value in st.net.concepts:
             resolved_value = st.net.concepts[req.value]
 
-        # Validate via variables if available
-        if spec.variables:
-            import inspect
-            sig = inspect.signature(spec.variables)
-            params = list(sig.parameters.keys())
-            if len(params) >= 1:
-                variables_result = spec.variables(st.net)
-            else:
-                variables_result = spec.variables()
-
-            from ctmsn.param.variable import Variable
-            vars_obj = variables_result[0]
-            found = False
-            for attr_name in dir(vars_obj):
-                val = getattr(vars_obj, attr_name, None)
-                if isinstance(val, Variable) and val.name == req.variable:
-                    if not val.domain.contains(resolved_value):
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Value '{req.value}' not in domain of '{req.variable}': {val.domain.describe()}",
-                        )
-                    found = True
-                    break
-            if not found:
+        # Validate via scenario variables + user variables
+        from ctmsn_api.routes_editors import _get_var_map
+        var_map = _get_var_map(ws, db)
+        if var_map:
+            matched_var = var_map.get(req.variable)
+            if matched_var is None:
                 raise HTTPException(status_code=400, detail=f"Unknown variable '{req.variable}'")
+            if not matched_var.domain.contains(resolved_value):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Value '{req.value}' not in domain of '{req.variable}': {matched_var.domain.describe()}",
+                )
 
         ctx_values[req.variable] = resolved_value
 
