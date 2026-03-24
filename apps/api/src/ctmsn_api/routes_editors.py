@@ -331,17 +331,27 @@ def list_variables(
     st = get_session(wid, db)
     result: list[dict] = []
 
+    user_vars = db.query(UserVariable).filter(UserVariable.workspace_id == wid).order_by(UserVariable.created_at).all()
+    user_var_by_name = {uv.name: uv for uv in user_vars}
+
     if st and st.scenario:
         spec = get_spec(st.scenario)
         scenario_vars = get_variable_info(spec, st.net, st.mode)
         if scenario_vars:
             for sv in scenario_vars:
                 sv["origin"] = "scenario"
-                result.append(sv)
+                # If a user variable overrides this scenario variable, use its domain
+                if sv["name"] in user_var_by_name:
+                    override = user_var_by_name.pop(sv["name"])
+                    merged = _serialize_user_variable(override)
+                    merged["origin"] = "scenario"
+                    result.append(merged)
+                else:
+                    result.append(sv)
 
-    user_vars = db.query(UserVariable).filter(UserVariable.workspace_id == wid).order_by(UserVariable.created_at).all()
     for uv in user_vars:
-        result.append(_serialize_user_variable(uv))
+        if uv.name in user_var_by_name:
+            result.append(_serialize_user_variable(uv))
 
     return {"variables": result}
 
