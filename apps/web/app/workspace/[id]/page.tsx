@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { listScenarios, loadScenario, runScenario, renameWorkspace, undoNetwork, redoNetwork, getHistoryStatus, exportWorkspace, importWorkspace } from "@/lib/api";
-import { LoadResponse, ScenarioSpec, Equation, ContextHighlights, FormulaInfo, NamedContextInfo, HistoryStatus } from "@/lib/types";
+import { listScenarios, loadScenario, runScenario, renameWorkspace, undoNetwork, redoNetwork, getHistoryStatus, exportWorkspace, importWorkspace, listAllVariables } from "@/lib/api";
+import { LoadResponse, ScenarioSpec, Equation, ContextHighlights, FormulaInfo, NamedContextInfo, HistoryStatus, VariableInfo } from "@/lib/types";
 import { ScenarioBar } from "@/components/ScenarioBar";
 import { GraphView, GraphViewHandle } from "@/components/GraphView";
 import { StatusPanel } from "@/components/StatusPanel";
@@ -50,6 +50,7 @@ export default function WorkspacePage() {
   const [graphLayout, setGraphLayout] = useState("cose");
   const [eqHighlights, setEqHighlights] = useState<ContextHighlights | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [allVariables, setAllVariables] = useState<VariableInfo[]>([]);
   const graphRef = useRef<GraphViewHandle>(null);
 
   useEffect(() => {
@@ -198,6 +199,28 @@ export default function WorkspacePage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   });
+
+  const refreshAllVariables = useCallback(async () => {
+    if (!sessionId) return;
+    try {
+      const all = await listAllVariables(sessionId);
+      setAllVariables(all.map((uv) => ({
+        name: uv.name,
+        type_tag: uv.type_tag,
+        domain_type: uv.domain_type,
+        values: uv.values,
+        min: uv.min,
+        max: uv.max,
+        origin: uv.origin,
+      })));
+    } catch {
+      setAllVariables(data?.variables ?? []);
+    }
+  }, [sessionId, data?.variables]);
+
+  useEffect(() => {
+    refreshAllVariables();
+  }, [refreshAllVariables]);
 
   const handleVariableUpdate = useCallback((resp: LoadResponse) => {
     setData(resp);
@@ -408,6 +431,7 @@ export default function WorkspacePage() {
                 sessionId={sessionId}
                 graph={data?.graph ?? null}
                 onUpdate={handleVariableUpdate}
+                onUserVariablesChange={refreshAllVariables}
               />
             )}
             {sessionId && (
@@ -423,7 +447,7 @@ export default function WorkspacePage() {
               <FormulaEditorPanel
                 sessionId={sessionId}
                 graph={data?.graph ?? null}
-                variables={data?.variables ?? []}
+                variables={allVariables.length > 0 ? allVariables : (data?.variables ?? [])}
                 activeTermPickerId={activeTermPickerId}
                 onTermPickerFocus={setActiveTermPickerId}
                 onFormulasChange={handleFormulasChange}

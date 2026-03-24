@@ -18,7 +18,9 @@ export function TermPicker({ value, onChange, graph, variables, pickerId, active
   const isActive = activeTermPickerId === pickerId;
 
   const conceptIds = graph?.nodes?.map((n) => n.id) ?? [];
-  const varNames = variables?.map((v) => v.name) ?? [];
+  const scenarioVars = variables?.filter((v) => v.origin !== "user") ?? [];
+  const userVars = variables?.filter((v) => v.origin === "user") ?? [];
+  const hasGroups = scenarioVars.length > 0 && userVars.length > 0;
 
   return (
     <div className={`border rounded px-1 py-0.5 text-xs ${isActive ? "ring-2 ring-blue-400" : ""}`}>
@@ -63,9 +65,24 @@ export function TermPicker({ value, onChange, graph, variables, pickerId, active
           className="border rounded px-1 py-0.5 text-xs w-full"
         >
           <option value="">—</option>
-          {varNames.map((name) => (
-            <option key={name} value={name}>{name}</option>
-          ))}
+          {hasGroups ? (
+            <>
+              <optgroup label="Сценарий">
+                {scenarioVars.map((v) => (
+                  <option key={v.name} value={v.name}>{v.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Пользовательские">
+                {userVars.map((v) => (
+                  <option key={v.name} value={v.name}>{v.name}</option>
+                ))}
+              </optgroup>
+            </>
+          ) : (
+            variables?.map((v) => (
+              <option key={v.name} value={v.name}>{v.name}</option>
+            ))
+          )}
         </select>
       )}
 

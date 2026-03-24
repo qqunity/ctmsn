@@ -24,6 +24,7 @@ export type VariableInfo = {
   values?: string[];
   min?: number;
   max?: number;
+  origin?: "scenario" | "user";
 };
 
 export type LoadResponse = {
