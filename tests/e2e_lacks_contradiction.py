@@ -1,9 +1,8 @@
-"""E2E test: verify that lacks_* predicates detect contradictions with has_* predicates.
+"""E2E test: verify that adding contradicting has_*/lacks_* facts is prevented.
 
 Scenario: lab5_inheritance has lacks_ability(penguin, ability_fly).
-When we add has_ability(penguin, ability_fly), the condition
-FactAtom("lacks_ability", penguin, ability_fly) must evaluate to FALSE,
-detecting the contradiction.
+When we try to add has_ability(penguin, ability_fly), the system must
+show an error and refuse the addition.
 """
 import sys
 import json
@@ -97,62 +96,44 @@ def step_create_workspace_and_load_scenario(page):
 
 
 def step_add_contradictory_fact(page, session_id):
-    """Add has_ability(penguin, ability_fly) to create contradiction."""
-    print("TEST: Add contradictory fact has_ability(penguin, ability_fly)")
+    """Try adding has_ability(penguin, ability_fly) — must be rejected with error."""
+    print("TEST: Add contradictory fact has_ability(penguin, ability_fly) — expect error")
 
-    # Use the Fact tab in the UI
+    # Switch to Fact tab in Network Editor
     fact_tab = page.locator("button:has-text('Fact')")
-    if fact_tab.count() > 0:
-        fact_tab.first.click()
-        page.wait_for_timeout(1000)
+    fact_tab.click()
+    page.wait_for_timeout(1000)
 
-    # Use the "Add Fact" form
-    pred_select = page.locator("select").filter(has_text="has_ability")
+    # The predicate select appears after switching to Fact tab
+    # Find select that contains has_ability option
+    pred_select = page.locator("text=Выберите предикат").locator("..").locator("select")
     if pred_select.count() == 0:
-        # Try selecting "has_ability" from a predicate dropdown
-        selects = page.locator("select")
-        for i in range(selects.count()):
-            sel = selects.nth(i)
-            options = sel.locator("option")
-            for j in range(options.count()):
-                txt = options.nth(j).text_content() or ""
-                if "has_ability" in txt:
-                    sel.select_option(index=j)
-                    page.wait_for_timeout(300)
-                    break
-
-    # Select arguments: penguin, ability_fly
+        # fallback: find select right after "Выберите предикат" text
+        pred_select = page.locator("select").last
+    pred_select.select_option(label="has_ability (арность: 2)")
     page.wait_for_timeout(500)
-    selects = page.locator("select")
-    for i in range(selects.count()):
-        sel = selects.nth(i)
-        options = sel.locator("option")
-        for j in range(options.count()):
-            txt = options.nth(j).text_content() or ""
-            if "penguin" in txt.lower():
-                sel.select_option(index=j)
-                page.wait_for_timeout(200)
-                break
 
-    page.wait_for_timeout(300)
-    selects = page.locator("select")
-    for i in range(selects.count()):
-        sel = selects.nth(i)
-        val = sel.input_value()
-        options = sel.locator("option")
-        for j in range(options.count()):
-            txt = options.nth(j).text_content() or ""
-            if "ability_fly" in txt.lower():
-                sel.select_option(index=j)
-                page.wait_for_timeout(200)
-                break
+    # Use manual input (Способ 2) to enter concept IDs
+    manual_input = page.locator("input[placeholder='concept1, concept2, ...']")
+    manual_input.fill("penguin, ability_fly")
+    page.wait_for_timeout(500)
 
-    add_btn = page.locator("button:has-text('Добавить')")
-    if add_btn.count() > 0:
-        add_btn.first.click()
-        page.wait_for_timeout(2000)
+    page.screenshot(path="/tmp/e2e_lacks_before_add.png")
+
+    # Click "Добавить факт"
+    add_btn = page.locator("button:has-text('Добавить факт')")
+    assert add_btn.count() > 0, "Add fact button not found"
+    add_btn.first.click()
+    page.wait_for_timeout(2000)
 
     page.screenshot(path="/tmp/e2e_lacks_after_add_fact.png")
+
+    # Verify error message is shown in the red error div
+    error_div = page.locator("div.bg-red-50")
+    assert error_div.count() > 0, "Expected red error div about contradiction"
+    error_text = error_div.first.text_content() or ""
+    assert "Противоречие" in error_text, f"Expected 'Противоречие' in error, got: {error_text}"
+    print(f"  Error shown: {error_text}")
     print("  PASS")
 
 
@@ -338,18 +319,10 @@ def main():
         def run_add_fact():
             step_add_contradictory_fact(page, session_id[0])
 
-        def run_create_formulas():
-            step_create_condition_formulas(page)
-
-        def run_check():
-            step_check_detects_contradiction(page)
-
         tests = [
             ("register_and_login", run_login),
             ("create_workspace", run_workspace),
             ("add_contradictory_fact", run_add_fact),
-            ("create_condition_formulas", run_create_formulas),
-            ("check_detects_contradiction", run_check),
         ]
 
         for name, fn in tests:

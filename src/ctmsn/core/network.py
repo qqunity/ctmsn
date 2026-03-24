@@ -33,6 +33,21 @@ class SemanticNetwork:
         if len(args) != pred.arity:
             raise ValueError(f"Arity mismatch: {predicate} expects {pred.arity}, got {len(args)}")
 
+        # Check for contradicting has_*/lacks_* facts
+        contra_pred = None
+        if predicate.startswith("has_"):
+            contra_pred = "lacks_" + predicate[len("has_"):]
+        elif predicate.startswith("lacks_"):
+            contra_pred = "has_" + predicate[len("lacks_"):]
+
+        if contra_pred and contra_pred in self.predicates:
+            contra_st = Statement(predicate=contra_pred, args=args)
+            if contra_st in self._facts:
+                args_str = ", ".join(getattr(a, "id", str(a)) for a in args)
+                raise ValueError(
+                    f"Противоречие: уже существует факт {contra_pred}({args_str})"
+                )
+
         st = Statement(predicate=predicate, args=args)
         if st in self._facts:
             return st
