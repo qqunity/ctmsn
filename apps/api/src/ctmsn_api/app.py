@@ -118,6 +118,7 @@ def load(
             "force": None,
             "variables": [],
             "context": {},
+            "contradictions": [],
         }
 
     spec = get_spec(req.scenario)
@@ -138,6 +139,7 @@ def load(
         "scenario": req.scenario,
         "mode": req.mode,
         "graph": serialize(net),
+        "contradictions": [],
         **ops,
     }
 
@@ -173,6 +175,7 @@ def run(
             "force": None,
             "variables": [],
             "context": {},
+            "contradictions": st.contradictions,
         }
 
     spec = get_spec(st.scenario)
@@ -183,6 +186,7 @@ def run(
         "scenario": st.scenario,
         "mode": st.mode,
         "graph": serialize(st.net),
+        "contradictions": st.contradictions,
         **ops,
     }
 

@@ -19,15 +19,17 @@ class SessionState:
     mode: Optional[str]
     net: SemanticNetwork
     context_values: dict[str, Any] = field(default_factory=dict)
+    contradictions: list[str] = field(default_factory=list)
 
 
 def network_to_json(net: SemanticNetwork) -> str:
     return json.dumps(dump_network(net))
 
 
-def network_from_json(data: str) -> SemanticNetwork:
+def network_from_json(data: str) -> tuple[SemanticNetwork, list[str]]:
     raw = json.loads(data) if isinstance(data, str) else data
     net = SemanticNetwork()
+    contradictions: list[str] = []
 
     for cid, cdata in raw.get("concepts", {}).items():
         net.add_concept(Concept(
@@ -44,9 +46,12 @@ def network_from_json(data: str) -> SemanticNetwork:
     for fdata in raw.get("facts", []):
         pred_name = fdata["predicate"]
         args = tuple(net.concepts[a] if a in net.concepts else a for a in fdata["args"])
-        net.assert_fact(pred_name, args)
+        try:
+            net.assert_fact(pred_name, args)
+        except ValueError as e:
+            contradictions.append(str(e))
 
-    return net
+    return net, contradictions
 
 
 def context_to_json(ctx_values: dict[str, Any], net: SemanticNetwork) -> str:
@@ -84,9 +89,12 @@ def get_session(workspace_id: str, db: Session) -> Optional[SessionState]:
     ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
     if not ws:
         return None
-    net = network_from_json(ws.network_json)
+    net, contradictions = network_from_json(ws.network_json)
     ctx_values = context_from_json(ws.context_json, net)
-    return SessionState(scenario=ws.scenario, mode=ws.mode, net=net, context_values=ctx_values)
+    return SessionState(
+        scenario=ws.scenario, mode=ws.mode, net=net,
+        context_values=ctx_values, contradictions=contradictions,
+    )
 
 
 def put_session(

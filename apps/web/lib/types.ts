@@ -39,6 +39,7 @@ export type LoadResponse = {
   force: string | null;
   variables?: VariableInfo[] | null;
   context?: Record<string, any>;
+  contradictions?: string[];
 };
 
 export type AddConceptRequest = {

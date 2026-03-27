@@ -18,6 +18,7 @@ import { GraphLegend } from "@/components/GraphLegend";
 import { LayoutSelector } from "@/components/LayoutSelector";
 import { NetworkStatsPanel } from "@/components/NetworkStatsPanel";
 import { GradePanel } from "@/components/GradePanel";
+import { ContradictionsBanner } from "@/components/ContradictionsBanner";
 import { GradeInfo } from "@/lib/types";
 
 export default function TeacherWorkspacePage() {
@@ -182,6 +183,12 @@ export default function TeacherWorkspacePage() {
           Выйти
         </button>
       </div>
+
+      {data?.contradictions && data.contradictions.length > 0 && (
+        <div className="px-3 pt-2">
+          <ContradictionsBanner items={data.contradictions} />
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden overflow-x-hidden">
         <div className="flex-1 relative">

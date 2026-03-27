@@ -113,7 +113,7 @@ def view_workspace(
     if not ws:
         raise HTTPException(status_code=404, detail="Workspace not found")
 
-    net = network_from_json(ws.network_json)
+    net, contradictions = network_from_json(ws.network_json)
 
     grade_out = None
     if ws.grade:
@@ -135,6 +135,7 @@ def view_workspace(
             "variables": None,
             "context": {},
             "grade": grade_out,
+            "contradictions": contradictions,
         }
 
     spec = get_spec(ws.scenario)
@@ -156,6 +157,7 @@ def view_workspace(
         "variables": variables,
         "context": ctx_display,
         "grade": grade_out,
+        "contradictions": contradictions,
     }
 
 

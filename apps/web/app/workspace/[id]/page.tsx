@@ -21,6 +21,7 @@ import { LayoutSelector } from "@/components/LayoutSelector";
 import { Tooltip } from "@/components/Tooltip";
 import { HelpPanel } from "@/components/HelpPanel";
 import { NetworkStatsPanel } from "@/components/NetworkStatsPanel";
+import { ContradictionsBanner } from "@/components/ContradictionsBanner";
 import { TOOLTIPS } from "@/lib/helpContent";
 
 export default function WorkspacePage() {
@@ -406,6 +407,12 @@ export default function WorkspacePage() {
         onLoad={handleLoad}
         onRun={handleRun}
       />
+
+      {data?.contradictions && data.contradictions.length > 0 && (
+        <div className="px-3 pt-2">
+          <ContradictionsBanner items={data.contradictions} />
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden overflow-x-hidden">
         <div className="flex-1 relative">
