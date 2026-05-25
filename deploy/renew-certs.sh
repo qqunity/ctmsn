@@ -6,7 +6,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-docker compose run --rm certbot renew --quiet
+docker compose run --rm certbot renew --webroot -w /var/www/certbot --quiet
 docker compose exec nginx nginx -s reload
 
 echo "[$(date)] Certificate renewal completed."
