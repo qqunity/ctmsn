@@ -20,6 +20,9 @@ import {
   ForcingCheckResult,
   ForcingForcesResult,
   ForcingForceResult,
+  TransitionRuleInfo,
+  TransitionEffectOp,
+  TransitionRunResult,
   CascadeInfo,
   HistoryStatus,
   UndoRedoResponse,
@@ -436,6 +439,58 @@ export async function runForcingForce(
   req: { context_id?: string | null; condition_ids: string[]; phi_id: string },
 ): Promise<ForcingForceResult> {
   const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/forcing/force`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  return ensureOk(r);
+}
+
+// ─── Transition rules ────────────────────────────────────────
+
+export async function listTransitionRules(workspaceId: string): Promise<TransitionRuleInfo[]> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/transition/rules`);
+  const j = await r.json();
+  return j.rules as TransitionRuleInfo[];
+}
+
+export async function createTransitionRule(
+  workspaceId: string,
+  data: { name: string; guard: FormulaNode; effect: TransitionEffectOp[]; priority?: number; on_event?: string | null },
+): Promise<TransitionRuleInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/transition/rules`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return ensureOk(r);
+}
+
+export async function updateTransitionRule(
+  workspaceId: string,
+  ruleId: string,
+  data: { name?: string; guard?: FormulaNode; effect?: TransitionEffectOp[]; priority?: number; on_event?: string | null },
+): Promise<TransitionRuleInfo> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/transition/rules/${ruleId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return ensureOk(r);
+}
+
+export async function deleteTransitionRule(workspaceId: string, ruleId: string): Promise<{ ok: boolean }> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/transition/rules/${ruleId}`, {
+    method: "DELETE",
+  });
+  return ensureOk(r);
+}
+
+export async function runTransition(
+  workspaceId: string,
+  req: { context_id?: string | null; invariant_ids: string[]; max_steps?: number },
+): Promise<TransitionRunResult> {
+  const r = await authFetch(`${API_BASE}/api/workspaces/${workspaceId}/transition/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),

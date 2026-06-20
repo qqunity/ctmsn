@@ -81,6 +81,22 @@ class FormulaRecord(Base):
     workspace = relationship("Workspace")
 
 
+class TransitionRuleRecord(Base):
+    __tablename__ = "transition_rules"
+
+    id = Column(String(32), primary_key=True, default=_uuid_hex)
+    workspace_id = Column(String(32), ForeignKey("workspaces.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    guard_json = Column(Text, nullable=False, default="{}")
+    effect_json = Column(Text, nullable=False, default="[]")
+    priority = Column(Integer, nullable=False, default=0)
+    on_event = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    workspace = relationship("Workspace")
+
+
 class UserVariable(Base):
     __tablename__ = "user_variables"
 

@@ -43,6 +43,17 @@ def migrate_db() -> None:
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )""",
+        """CREATE TABLE IF NOT EXISTS transition_rules (
+            id VARCHAR(32) PRIMARY KEY,
+            workspace_id VARCHAR(32) NOT NULL REFERENCES workspaces(id),
+            name VARCHAR(255) NOT NULL,
+            guard_json TEXT NOT NULL DEFAULT '{}',
+            effect_json TEXT NOT NULL DEFAULT '[]',
+            priority INTEGER NOT NULL DEFAULT 0,
+            on_event VARCHAR(255),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
         """CREATE TABLE IF NOT EXISTS user_variables (
             id VARCHAR(32) PRIMARY KEY,
             workspace_id VARCHAR(32) NOT NULL REFERENCES workspaces(id),
