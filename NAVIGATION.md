@@ -19,6 +19,9 @@
 ### Исследователь
 `FORCING_IMPLEMENTATION.md` → `*_IMPLEMENTATION.md` → исходный код в `src/ctmsn/`
 
+### Исследовательская платформа (переходы, эксперименты, верификация)
+`docs/ROADMAP-ASP.md` → `src/ctmsn/transition/` → `src/ctmsn/experiment/` → `docs/VERIFICATION.md` + `specs/`
+
 ### Студент
 `docs/LAB1_UNIVERSITY_INSTRUCTION.md` → `LAB2_SCENARIOS_INSTRUCTION.md` → `LAB3_FORMULAS_INSTRUCTION.md` → `LAB4_FORCING_INSTRUCTION.md`
 
@@ -32,6 +35,8 @@
 
 ```text
 README.md
+├─ docs/ROADMAP-ASP.md          # дорожная карта платформы (S1–S6)
+├─ docs/VERIFICATION.md         # формальная верификация (TLA+ + model-checker)
 ├─ USAGE.md
 │  ├─ FORCING_IMPLEMENTATION.md
 │  ├─ src/ctmsn/scenarios/README.md
@@ -62,6 +67,8 @@ README.md
 | Документ | Назначение |
 |---|---|
 | [README.md](README.md) | Точка входа и обзор |
+| [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md) | Дорожная карта исследовательской платформы (S1–S6) |
+| [docs/VERIFICATION.md](docs/VERIFICATION.md) | Формальная верификация: TLA+ и ограниченный model-checker |
 | [USAGE.md](USAGE.md) | Практическое использование библиотеки |
 | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md) | Детали логики форсинга и BruteEnumStrategy |
 | [UI_IMPLEMENTATION.md](UI_IMPLEMENTATION.md) | Архитектура UI: редакторы, оценки, баг-репорты |
@@ -84,6 +91,9 @@ README.md
 - Начать с нуля: [README.md](README.md#быстрый-старт-ядро)
 - Разобраться с API ядра: [USAGE.md](USAGE.md#ключевые-api)
 - Изучить алгоритм форсинга: [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md)
+- Понять платформу целиком: [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md)
+- Запустить переходы/эксперименты: [README.md](README.md#переходы-эксперименты-верификация)
+- Разобраться с верификацией: [docs/VERIFICATION.md](docs/VERIFICATION.md)
 - Запустить готовый сценарий: [src/ctmsn/scenarios/fast_smith/README.md](src/ctmsn/scenarios/fast_smith/README.md)
 - Собрать собственный сценарий: [src/ctmsn/scenarios/README.md](src/ctmsn/scenarios/README.md)
 - Работать с локальным UI: [UI_IMPLEMENTATION.md](UI_IMPLEMENTATION.md)

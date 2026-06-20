@@ -2,6 +2,32 @@
 
 > **Навигация:** [🏠 Главная](README.md) | [Сводка документации ←](DOCUMENTATION_SUMMARY.md) | **Вы здесь: История изменений**
 
+## [2026-06-20] Исследовательская платформа: переходы, эксперименты, верификация (S1–S6)
+
+### Обновлено
+- `README.md`: новый раздел «Переходы, эксперименты, верификация», обновлены «Что в проекте», структура проекта, «Тестирование и CI», таблица состояния (строки S1–S6), ссылки на ROADMAP-ASP.md и VERIFICATION.md
+- `NAVIGATION.md`: маршрут «Исследовательская платформа», новые документы в графе, справочной таблице и навигации по задачам
+- `DOCUMENTATION_SUMMARY.md`: ROADMAP-ASP.md/VERIFICATION.md в таблице, расширено покрытие по темам, порядок чтения платформы
+
+### Добавлено
+- `docs/ROADMAP-ASP.md` — дорожная карта исследовательской платформы (S1–S6)
+- `docs/VERIFICATION.md` — формальная верификация (TLA+ + ограниченный model-checker)
+
+### Контекст обновления
+- S1: переходные/устойчивые режимы (`transition/`) + API-эндпойнт + панель UI
+- S2: экспериментальный контур (`experiment/`) — метрики, batch-runner, экспорт JSON/CSV
+- S3: baseline A/B/C + статистика (Mann–Whitney, bootstrap CI), extras `experiment`
+- S4: декларативный DSL моделей (`io/`) — JSON/YAML, round-trip, extras `io`
+- S5: формальная верификация — `specs/Transition.tla`, конфигурации TLC, model-checker
+- S6: CI/CD — GitHub Actions (ruff, mypy, pytest, tsc), конфигурации в `pyproject.toml`
+- Ядро (`core/param/logic/forcing/transition/io`) остаётся zero-dependency
+
+### Проверка
+- Проверены ссылки между документами и соответствие структуре репозитория
+- Локально и в CI: ruff clean, mypy clean, pytest (юнит-набор) green
+
+---
+
 ## [2026-03-12] Обновление документации: лабораторные, force()-поиск, оценки, deploy
 
 ### Обновлено

@@ -4,8 +4,9 @@
 
 ## Обзор
 
-Документация покрывает три области проекта:
+Документация покрывает четыре области проекта:
 - ядро библиотеки (`src/ctmsn`)
+- исследовательская платформа: переходы, эксперименты, верификация (`transition`, `experiment`, `io`, `specs`)
 - локальное приложение (`apps/api`, `apps/web`)
 - инструкции к лабораторным работам (`docs/`)
 
@@ -14,6 +15,8 @@
 | Документ | Область |
 |---|---|
 | [README.md](README.md) | Общий вход, структура, команды запуска |
+| [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md) | Дорожная карта исследовательской платформы (S1–S6) |
+| [docs/VERIFICATION.md](docs/VERIFICATION.md) | Формальная верификация: TLA+ и ограниченный model-checker |
 | [USAGE.md](USAGE.md) | Практическое использование API ядра |
 | [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md) | Формальная и техническая часть форсинга |
 | [src/ctmsn/scenarios/README.md](src/ctmsn/scenarios/README.md) | Шаблон и правила создания сценариев |
@@ -48,6 +51,12 @@
 3. [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md)
 4. документы сценариев
 
+### Исследовательская платформа
+1. [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md)
+2. `src/ctmsn/transition/` + `src/ctmsn/examples/transition_demo.py`
+3. `src/ctmsn/experiment/` + `baseline_comparison_demo.py`
+4. [docs/VERIFICATION.md](docs/VERIFICATION.md) + `specs/`
+
 ### UI/API
 1. [README.md](README.md#локальный-ui-api--web)
 2. [UI_IMPLEMENTATION.md](UI_IMPLEMENTATION.md)
@@ -64,13 +73,18 @@
 ## Покрытие по темам
 
 - Семантическая сеть, параметризация, логика, форсинг
-- Сценарии: `fast_smith`, `time_process`, `fishing`, `spawn`, `lab1_university`, `lab3_formulas`
-- Запуск и сопровождение локального UI
+- Переходные/устойчивые режимы: правила, инварианты, трасса, model-checker
+- Экспериментальный контур: метрики, batch-прогон, экспорт артефактов
+- Сравнение baseline A/B/C и статистика (Mann–Whitney, bootstrap CI)
+- Декларативный DSL моделей (JSON/YAML), round-trip
+- Формальная верификация: TLA+-спецификация и ограниченный model-checker
+- Сценарии: `fast_smith`, `time_process`, `fishing`, `spawn`, `lab1_university`, `lab3_formulas`, `lab5_inheritance`
+- Запуск и сопровождение локального UI (включая панель переходов)
 - Панель преподавателя: просмотр workspace, оценки, комментарии
 - Система баг-репортов: отправка, управление статусами
 - Справочная система: глоссарий, таблицы истинности
 - Развёртывание: Docker Compose, Nginx, Ansible
-- Базовые тесты, тесты force()-поиска и e2e-проверки
+- Качество: ruff, mypy, pytest, CI (GitHub Actions); базовые/юнит/e2e-тесты
 
 ---
 
