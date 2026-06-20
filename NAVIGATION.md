@@ -22,6 +22,9 @@
 ### Исследовательская платформа (переходы, эксперименты, верификация)
 `docs/ROADMAP-ASP.md` → `src/ctmsn/transition/` → `src/ctmsn/experiment/` → `docs/VERIFICATION.md` + `specs/`
 
+### Теория (для диссертации)
+`docs/THEORY.md` → `docs/VERIFICATION.md` → исходный код `src/ctmsn/` → `docs/deep-research-report-asp.md`
+
 ### Студент
 `docs/LAB1_UNIVERSITY_INSTRUCTION.md` → `LAB2_SCENARIOS_INSTRUCTION.md` → `LAB3_FORMULAS_INSTRUCTION.md` → `LAB4_FORCING_INSTRUCTION.md`
 
@@ -35,6 +38,7 @@
 
 ```text
 README.md
+├─ docs/THEORY.md               # формальная и теоретическая модель (для диссертации)
 ├─ docs/ROADMAP-ASP.md          # дорожная карта платформы (S1–S6)
 ├─ docs/VERIFICATION.md         # формальная верификация (TLA+ + model-checker)
 ├─ USAGE.md
@@ -67,6 +71,7 @@ README.md
 | Документ | Назначение |
 |---|---|
 | [README.md](README.md) | Точка входа и обзор |
+| [docs/THEORY.md](docs/THEORY.md) | Формальная и теоретическая модель (определения, семантика, верификация) |
 | [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md) | Дорожная карта исследовательской платформы (S1–S6) |
 | [docs/VERIFICATION.md](docs/VERIFICATION.md) | Формальная верификация: TLA+ и ограниченный model-checker |
 | [USAGE.md](USAGE.md) | Практическое использование библиотеки |
@@ -91,6 +96,7 @@ README.md
 - Начать с нуля: [README.md](README.md#быстрый-старт-ядро)
 - Разобраться с API ядра: [USAGE.md](USAGE.md#ключевые-api)
 - Изучить алгоритм форсинга: [FORCING_IMPLEMENTATION.md](FORCING_IMPLEMENTATION.md)
+- Изучить формальную модель: [docs/THEORY.md](docs/THEORY.md)
 - Понять платформу целиком: [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md)
 - Запустить переходы/эксперименты: [README.md](README.md#переходы-эксперименты-верификация)
 - Разобраться с верификацией: [docs/VERIFICATION.md](docs/VERIFICATION.md)

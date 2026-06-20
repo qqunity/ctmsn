@@ -252,6 +252,7 @@ ruff → mypy → pytest → smoke-прогон демо (job python) и `tsc --
 ## Документация
 
 Основные документы:
+- [docs/THEORY.md](docs/THEORY.md) — формальная и теоретическая модель (определения, семантика, верификация; для диссертации)
 - [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md) — дорожная карта исследовательской платформы (S1–S6)
 - [docs/VERIFICATION.md](docs/VERIFICATION.md) — формальная верификация (TLA+ + ограниченный model-checker)
 - [USAGE.md](USAGE.md) — практическое руководство

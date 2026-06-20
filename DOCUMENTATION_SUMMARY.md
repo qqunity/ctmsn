@@ -15,6 +15,7 @@
 | Документ | Область |
 |---|---|
 | [README.md](README.md) | Общий вход, структура, команды запуска |
+| [docs/THEORY.md](docs/THEORY.md) | Формальная и теоретическая модель (определения, семантика, верификация) |
 | [docs/ROADMAP-ASP.md](docs/ROADMAP-ASP.md) | Дорожная карта исследовательской платформы (S1–S6) |
 | [docs/VERIFICATION.md](docs/VERIFICATION.md) | Формальная верификация: TLA+ и ограниченный model-checker |
 | [USAGE.md](USAGE.md) | Практическое использование API ядра |
@@ -56,6 +57,11 @@
 2. `src/ctmsn/transition/` + `src/ctmsn/examples/transition_demo.py`
 3. `src/ctmsn/experiment/` + `baseline_comparison_demo.py`
 4. [docs/VERIFICATION.md](docs/VERIFICATION.md) + `specs/`
+
+### Теоретическая модель (диссертация)
+1. [docs/THEORY.md](docs/THEORY.md)
+2. [docs/VERIFICATION.md](docs/VERIFICATION.md)
+3. [docs/deep-research-report-asp.md](docs/deep-research-report-asp.md)
 
 ### UI/API
 1. [README.md](README.md#локальный-ui-api--web)
