@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, Iterator, Optional, Set, Tuple
+from typing import Dict, Iterable, Set, Tuple
 
 from ctmsn.core.concept import Concept
 from ctmsn.core.predicate import Predicate

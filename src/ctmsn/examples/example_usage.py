@@ -6,7 +6,7 @@ from ctmsn.param.domain import EnumDomain
 from ctmsn.param.variable import Variable
 from ctmsn.param.context import Context
 
-from ctmsn.logic.formula import FactAtom, And, Not
+from ctmsn.logic.formula import FactAtom, Not
 from ctmsn.forcing.conditions import Conditions
 from ctmsn.forcing.engine import ForcingEngine
 

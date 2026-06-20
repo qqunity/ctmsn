@@ -9,7 +9,7 @@ def test_run_sun_mode():
     assert out["mode"] == "sun"
     assert out["derivation"]["derived_edges_added"] > 0
     assert out["check"].ok
-    assert out["forces"].value == TriBool.TRUE
+    assert out["forces"] == TriBool.TRUE
     assert len(out["explain"]) > 0
 
 
@@ -17,7 +17,7 @@ def test_run_prereq_mode():
     out = run(mode="prereq")
     assert out["mode"] == "prereq"
     assert out["check"].ok
-    assert out["forces"].value == TriBool.TRUE
+    assert out["forces"] == TriBool.TRUE
     assert len(out["explain"]) > 0
 
 

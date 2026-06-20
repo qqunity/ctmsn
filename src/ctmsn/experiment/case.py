@@ -10,7 +10,7 @@ from ctmsn.forcing.conditions import Conditions
 from ctmsn.logic.formula import FactAtom, Or
 from ctmsn.param.context import Context
 from ctmsn.transition.invariant import invariants
-from ctmsn.transition.rule import AddFact, RetractFact, TransitionRule
+from ctmsn.transition.rule import AddFact, FactOp, RetractFact, TransitionRule
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,7 @@ def staged_process_case(
     rules: list[TransitionRule] = []
     for i in range(n_stages - 1):
         src, dst = stages[i], stages[i + 1]
-        effect = [RetractFact("at", ("obj", src))]
+        effect: list[FactOp] = [RetractFact("at", ("obj", src))]
         if not (leaky and i == 0):
             effect.append(AddFact("at", ("obj", dst)))
         rules.append(

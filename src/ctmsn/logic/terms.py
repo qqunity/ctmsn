@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Union
 
 from ctmsn.core.concept import Concept
 from ctmsn.param.variable import Variable

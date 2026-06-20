@@ -35,7 +35,7 @@ def test_force_goal():
     ctx = Context()
     
     result = eng.force(ctx, phi, conds)
-    assert result.status.is_true()
+    assert result.status == TriBool.TRUE
 
 
 def test_check_conditions():

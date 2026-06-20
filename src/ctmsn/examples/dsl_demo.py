@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import json
 
 from ctmsn.io import dumps_model_json, load_model, loads_model_json
 

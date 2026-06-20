@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from ctmsn.core.network import SemanticNetwork
 from ctmsn.param.context import Context
-from ctmsn.logic.formula import Formula, And, collect_variables
+from ctmsn.logic.formula import Formula, collect_variables
 from ctmsn.logic.tribool import TriBool
 from ctmsn.logic.evaluator import evaluate
 from ctmsn.forcing.conditions import Conditions

@@ -14,6 +14,26 @@ dependencies = []
 [project.optional-dependencies]
 experiment = ["numpy>=1.24", "scipy>=1.10", "statsmodels>=0.14"]
 io = ["PyYAML>=6.0"]
+dev = ["pytest>=7", "ruff>=0.5", "mypy>=1.8"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.ruff]
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E741", "E501"]  # неоднозначные имена/длина строк — нерелевантны для math-кода
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+# Строгая типизация — для модулей, добавленных дорожной картой; ядро/сценарии
+# типизированы исторически нестрого и проверяются отдельно.
+files = ["src/ctmsn/transition", "src/ctmsn/experiment", "src/ctmsn/io"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

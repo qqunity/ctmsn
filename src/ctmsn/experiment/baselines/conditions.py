@@ -10,7 +10,7 @@ from ctmsn.forcing.conditions import Conditions
 from ctmsn.logic.formula import FactAtom, Or
 from ctmsn.transition.engine import TransitionEngine, make_state
 from ctmsn.transition.invariant import invariants
-from ctmsn.transition.rule import AddFact, RetractFact, TransitionRule
+from ctmsn.transition.rule import AddFact, FactOp, RetractFact, TransitionRule
 from ctmsn.experiment.baselines.problem import Problem
 
 
@@ -48,7 +48,7 @@ def _build_net_and_rules(problem: Problem):
     rules: list[TransitionRule] = []
     for i in range(problem.n_stages - 1):
         src, dst = stages[i], stages[i + 1]
-        effect = [RetractFact("at", ("obj", src))]
+        effect: list[FactOp] = [RetractFact("at", ("obj", src))]
         if not (problem.faulty and i == problem.fault_at):
             effect.append(AddFact("at", ("obj", dst)))
         rules.append(

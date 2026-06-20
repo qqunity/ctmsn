@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    name: Lint, typecheck, tests (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package with extras
+        run: pip install -e ".[experiment,io,dev]"
+
+      - name: Ruff (lint)
+        run: ruff check src/ctmsn
+
+      - name: Mypy (typecheck roadmap modules)
+        run: mypy
+
+      - name: Pytest (unit tests)
+        # e2e_*.py не собираются (python_files=test_*.py); API-зависимый тест
+        # исключён — он проверяется в отдельном контуре с установленным ctmsn_api.
+        run: pytest --ignore=tests/test_network_from_json_contradictions.py -q
+
+      - name: Smoke-run examples
+        run: |
+          python src/ctmsn/examples/transition_demo.py
+          python src/ctmsn/examples/experiment_demo.py
+          python src/ctmsn/examples/verify_demo.py
+          python src/ctmsn/examples/dsl_demo.py
+          python src/ctmsn/examples/baseline_comparison_demo.py
+
+  web:
+    name: Typecheck (web)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install web deps
+        working-directory: apps/web
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        working-directory: apps/web
+        run: npx tsc --noEmit

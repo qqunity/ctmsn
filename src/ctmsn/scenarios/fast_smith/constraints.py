@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from ctmsn.logic.formula import And, FactAtom, Not
+from ctmsn.logic.formula import FactAtom, Not
 from ctmsn.forcing.conditions import Conditions
 from ctmsn.core.network import SemanticNetwork
 
 
 def build_conditions(net: SemanticNetwork) -> Conditions:
-    A = net.concepts["A"]
     T = net.concepts["T"]
     T_plus = net.concepts["T_plus"]
     T_minus = net.concepts["T_minus"]

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from ctmsn.param.domain import Domain
 from ctmsn.param.variable import Variable
 
 

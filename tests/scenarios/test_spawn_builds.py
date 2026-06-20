@@ -19,7 +19,7 @@ def test_network_builds():
 def test_conditions_build():
     conds = build_conditions()
     assert conds is not None
-    assert len(conds.formulas) == 6
+    assert len(conds.items) == 6
 
 
 def test_goal_builds():

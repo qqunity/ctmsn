@@ -40,10 +40,12 @@ def evaluate(formula: Formula, net: SemanticNetwork, ctx: Context) -> TriBool:
             for fa, ra in zip(f.args, resolved_args):
                 if isinstance(fa, Concept) and isinstance(ra, Concept):
                     if fa.id != ra.id:
-                        ok = False; break
+                        ok = False
+                        break
                 else:
                     if fa != ra:
-                        ok = False; break
+                        ok = False
+                        break
             if ok:
                 return TriBool.FALSE if negate else TriBool.TRUE
         return TriBool.TRUE if negate else TriBool.FALSE
