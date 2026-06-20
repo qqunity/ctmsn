@@ -13,6 +13,7 @@ dependencies = []
 # (statistics). Ядро ctmsn (core/param/logic/forcing/transition) — zero-dependency.
 [project.optional-dependencies]
 experiment = ["numpy>=1.24", "scipy>=1.10", "statsmodels>=0.14"]
+io = ["PyYAML>=6.0"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
