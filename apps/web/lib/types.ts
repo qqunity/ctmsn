@@ -235,6 +235,43 @@ export type ForcingForceResult = {
   extended_context: Record<string, any> | null;
 };
 
+// ─── Transition (переходные/устойчивые режимы) ───────────────
+
+export type TransitionEffectOp = {
+  op: "add" | "retract";
+  predicate: string;
+  args: (string | number)[];
+};
+
+export type TransitionRuleInfo = {
+  id: string;
+  name: string;
+  guard: FormulaNode;
+  guard_text: string;
+  effect: TransitionEffectOp[];
+  priority: number;
+  on_event: string | null;
+};
+
+export type TransitionStepInfo = {
+  index: number;
+  rule: string;
+  event: string | null;
+  added: string[];
+  removed: string[];
+  invariants_ok: boolean;
+  violated: string[];
+  touched: string[];
+  mode: "transient" | "stable";
+};
+
+export type TransitionRunResult = {
+  steps: TransitionStepInfo[];
+  final_mode: "transient" | "stable";
+  convergence_steps: number | null;
+  rules_count: number;
+};
+
 export type ForcingRunRecord = {
   id: string;
   timestamp: string;

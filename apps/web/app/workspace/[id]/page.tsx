@@ -16,6 +16,7 @@ import { VariableEditorPanel } from "@/components/VariableEditorPanel";
 import { ContextEditorPanel } from "@/components/ContextEditorPanel";
 import { FormulaEditorPanel } from "@/components/FormulaEditorPanel";
 import { ForcingPanel } from "@/components/ForcingPanel";
+import { TransitionPanel } from "@/components/TransitionPanel";
 import { GraphLegend } from "@/components/GraphLegend";
 import { LayoutSelector } from "@/components/LayoutSelector";
 import { Tooltip } from "@/components/Tooltip";
@@ -50,6 +51,7 @@ export default function WorkspacePage() {
   const [historyStatus, setHistoryStatus] = useState<HistoryStatus>({ can_undo: false, can_redo: false, undo_count: 0, redo_count: 0 });
   const [graphLayout, setGraphLayout] = useState("cose");
   const [eqHighlights, setEqHighlights] = useState<ContextHighlights | null>(null);
+  const [transitionHighlights, setTransitionHighlights] = useState<ContextHighlights | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [allVariables, setAllVariables] = useState<VariableInfo[]>([]);
   const graphRef = useRef<GraphViewHandle>(null);
@@ -423,6 +425,7 @@ export default function WorkspacePage() {
             highlights={highlights}
             layout={graphLayout}
             equationHighlights={eqHighlights}
+            transitionHighlights={transitionHighlights}
           />
           <GraphLegend />
         </div>
@@ -468,6 +471,17 @@ export default function WorkspacePage() {
                 scenarioCheck={data?.check ?? null}
                 scenarioForces={data?.forces ?? null}
                 scenarioForce={data?.force ?? null}
+              />
+            )}
+            {sessionId && (
+              <TransitionPanel
+                sessionId={sessionId}
+                graph={data?.graph ?? null}
+                variables={allVariables.length > 0 ? allVariables : (data?.variables ?? [])}
+                formulas={sharedFormulas}
+                activeTermPickerId={activeTermPickerId}
+                onTermPickerFocus={setActiveTermPickerId}
+                onStepHighlight={(touched) => setTransitionHighlights({ nodes: touched, edges: [] })}
               />
             )}
             {sessionId && (

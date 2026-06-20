@@ -14,10 +14,25 @@ from ctmsn.logic.evaluator import evaluate
 from ctmsn.param.context import Context
 from ctmsn.param.domain import EnumDomain, PredicateDomain, RangeDomain
 from ctmsn.param.variable import Variable
+from ctmsn.transition import (
+    AddFact,
+    RetractFact,
+    TransitionEngine,
+    TransitionRule,
+    invariants as build_invariants,
+    make_state,
+)
 from ctmsn_api.auth import get_current_user
 from ctmsn_api.database import get_db
 from ctmsn_api.formula_serde import formula_from_json, formula_to_json, formula_to_text
-from ctmsn_api.models import FormulaRecord, NamedContext, User, UserVariable, Workspace
+from ctmsn_api.models import (
+    FormulaRecord,
+    NamedContext,
+    TransitionRuleRecord,
+    User,
+    UserVariable,
+    Workspace,
+)
 from ctmsn_api.ops import get_variable_info
 from ctmsn_api.registry import get as get_spec
 from ctmsn_api.sessions import context_from_json, context_to_json, get_session
@@ -910,3 +925,227 @@ def forcing_force(
         explanation=force_result.explanation,
         extended_context=extended_ctx,
     ).model_dump()
+
+
+# ─── Transition rules (переходные/устойчивые режимы) ──────────────
+
+class TransitionRuleReq(BaseModel):
+    name: str
+    guard: dict
+    effect: list[dict] = []
+    priority: int = 0
+    on_event: Optional[str] = None
+
+
+class TransitionRuleUpdateReq(BaseModel):
+    name: Optional[str] = None
+    guard: Optional[dict] = None
+    effect: Optional[list[dict]] = None
+    priority: Optional[int] = None
+    on_event: Optional[str] = None
+
+
+def _serialize_rule(rec: TransitionRuleRecord, net, var_map) -> dict:
+    guard_text = "(invalid)"
+    try:
+        guard_text = formula_to_text(formula_from_json(json.loads(rec.guard_json), net, var_map))
+    except Exception:
+        pass
+    return {
+        "id": rec.id,
+        "name": rec.name,
+        "guard": json.loads(rec.guard_json),
+        "guard_text": guard_text,
+        "effect": json.loads(rec.effect_json),
+        "priority": rec.priority or 0,
+        "on_event": rec.on_event,
+    }
+
+
+def _effect_from_json(data: list[dict]) -> tuple:
+    ops: list = []
+    for op in data or []:
+        pred = op.get("predicate")
+        if not pred:
+            continue
+        args = tuple(op.get("args", []))
+        if op.get("op") == "add":
+            ops.append(AddFact(predicate=pred, args=args))
+        elif op.get("op") == "retract":
+            ops.append(RetractFact(predicate=pred, args=args))
+    return tuple(ops)
+
+
+def _rule_from_record(rec: TransitionRuleRecord, net, var_map) -> Optional[TransitionRule]:
+    try:
+        guard = formula_from_json(json.loads(rec.guard_json), net, var_map)
+    except Exception:
+        return None
+    return TransitionRule(
+        name=rec.name,
+        guard=guard,
+        effect=_effect_from_json(json.loads(rec.effect_json)),
+        priority=rec.priority or 0,
+        on_event=rec.on_event,
+    )
+
+
+@router.post("/api/workspaces/{wid}/transition/rules")
+def create_transition_rule(
+    wid: str,
+    req: TransitionRuleReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = _check_workspace(wid, user, db)
+    rec = TransitionRuleRecord(
+        workspace_id=wid,
+        name=req.name,
+        guard_json=json.dumps(req.guard),
+        effect_json=json.dumps(req.effect),
+        priority=req.priority,
+        on_event=req.on_event,
+    )
+    db.add(rec)
+    db.commit()
+    db.refresh(rec)
+    var_map = _get_var_map(ws, db)
+    st = get_session(wid, db)
+    return _serialize_rule(rec, st.net if st else None, var_map)
+
+
+@router.get("/api/workspaces/{wid}/transition/rules")
+def list_transition_rules(
+    wid: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = _check_workspace(wid, user, db)
+    var_map = _get_var_map(ws, db)
+    st = get_session(wid, db)
+    recs = (
+        db.query(TransitionRuleRecord)
+        .filter(TransitionRuleRecord.workspace_id == wid)
+        .order_by(TransitionRuleRecord.priority.desc(), TransitionRuleRecord.created_at.asc())
+        .all()
+    )
+    return {"rules": [_serialize_rule(r, st.net if st else None, var_map) for r in recs]}
+
+
+@router.put("/api/workspaces/{wid}/transition/rules/{rule_id}")
+def update_transition_rule(
+    wid: str,
+    rule_id: str,
+    req: TransitionRuleUpdateReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = _check_workspace(wid, user, db)
+    rec = (
+        db.query(TransitionRuleRecord)
+        .filter(TransitionRuleRecord.id == rule_id, TransitionRuleRecord.workspace_id == wid)
+        .first()
+    )
+    if not rec:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    if req.name is not None:
+        rec.name = req.name
+    if req.guard is not None:
+        rec.guard_json = json.dumps(req.guard)
+    if req.effect is not None:
+        rec.effect_json = json.dumps(req.effect)
+    if req.priority is not None:
+        rec.priority = req.priority
+    if req.on_event is not None:
+        rec.on_event = req.on_event or None
+    db.commit()
+    db.refresh(rec)
+    var_map = _get_var_map(ws, db)
+    st = get_session(wid, db)
+    return _serialize_rule(rec, st.net if st else None, var_map)
+
+
+@router.delete("/api/workspaces/{wid}/transition/rules/{rule_id}")
+def delete_transition_rule(
+    wid: str,
+    rule_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _check_workspace(wid, user, db)
+    rec = (
+        db.query(TransitionRuleRecord)
+        .filter(TransitionRuleRecord.id == rule_id, TransitionRuleRecord.workspace_id == wid)
+        .first()
+    )
+    if not rec:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    db.delete(rec)
+    db.commit()
+    return {"ok": True}
+
+
+class TransitionRunReq(BaseModel):
+    context_id: Optional[str] = None
+    invariant_ids: list[str] = []
+    max_steps: int = 50
+
+
+@router.post("/api/workspaces/{wid}/transition/run")
+def transition_run(
+    wid: str,
+    req: TransitionRunReq,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ws = _check_workspace(wid, user, db)
+    net, ctx, var_map = _build_forcing_context(ws, wid, req.context_id, db)
+
+    rule_recs = (
+        db.query(TransitionRuleRecord)
+        .filter(TransitionRuleRecord.workspace_id == wid)
+        .all()
+    )
+    rules = [r for r in (_rule_from_record(rec, net, var_map) for rec in rule_recs) if r]
+
+    inv_formulas = []
+    for iid in req.invariant_ids:
+        rec = (
+            db.query(FormulaRecord)
+            .filter(FormulaRecord.id == iid, FormulaRecord.workspace_id == wid)
+            .first()
+        )
+        if not rec:
+            continue
+        try:
+            inv_formulas.append(formula_from_json(json.loads(rec.formula_json), net, var_map))
+        except Exception:
+            pass
+
+    engine = TransitionEngine(
+        rules=rules,
+        invariants=build_invariants(*inv_formulas),
+        max_steps=max(1, min(req.max_steps, 500)),
+    )
+    trace = engine.run_to_fixpoint(make_state(net, ctx))
+
+    steps = [
+        {
+            "index": s.index,
+            "rule": s.rule,
+            "event": s.event,
+            "added": list(s.added),
+            "removed": list(s.removed),
+            "invariants_ok": s.invariants_ok,
+            "violated": list(s.violated),
+            "touched": list(s.touched),
+            "mode": s.mode.value,
+        }
+        for s in trace.steps
+    ]
+    return {
+        "steps": steps,
+        "final_mode": trace.final_mode.value,
+        "convergence_steps": trace.convergence_steps,
+        "rules_count": len(rules),
+    }

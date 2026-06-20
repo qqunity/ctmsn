@@ -17,8 +17,9 @@ export const GraphView = forwardRef<
     highlights?: ContextHighlights | null;
     layout?: string;
     equationHighlights?: ContextHighlights | null;
+    transitionHighlights?: ContextHighlights | null;
   }
->(function GraphView({ graph, onSelect, highlights, layout = "cose", equationHighlights }, ref) {
+>(function GraphView({ graph, onSelect, highlights, layout = "cose", equationHighlights, transitionHighlights }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<any>(null);
 
@@ -140,6 +141,20 @@ export const GraphView = forwardRef<
               width: 3,
             } as any,
           },
+          // Transition step highlights (blue)
+          {
+            selector: "node.tr-highlighted",
+            style: {
+              "border-width": 5,
+              "border-color": "#2563eb",
+              "border-style": "solid",
+              "background-color": "#1d4ed8",
+            } as any,
+          },
+          {
+            selector: "node.tr-highlighted.dimmed",
+            style: { opacity: 1 } as any,
+          },
           // Hover dimming
           {
             selector: "node.dimmed",
@@ -257,6 +272,20 @@ export const GraphView = forwardRef<
       }
     }
   }, [equationHighlights]);
+
+  // Separate effect for transition step highlights (blue)
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    cy.elements().removeClass("tr-highlighted");
+
+    if (transitionHighlights) {
+      for (const nodeId of transitionHighlights.nodes) {
+        cy.getElementById(nodeId).addClass("tr-highlighted");
+      }
+    }
+  }, [transitionHighlights]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 });

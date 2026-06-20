@@ -150,6 +150,21 @@ class SemanticNetwork:
             )
         self.predicates[old_name] = new_predicate
 
+    def copy(self) -> "SemanticNetwork":
+        """Return an independent copy of the network.
+
+        Concepts, predicates and statements are immutable (frozen), so a shallow
+        copy of the index containers is sufficient: mutating the copy
+        (assert_fact/remove_fact) does not affect the original.
+        """
+        new = SemanticNetwork()
+        new.concepts = dict(self.concepts)
+        new.predicates = dict(self.predicates)
+        new._facts = set(self._facts)
+        new._facts_by_pred = {k: set(v) for k, v in self._facts_by_pred.items()}
+        new._facts_by_concept = {k: set(v) for k, v in self._facts_by_concept.items()}
+        return new
+
     def validate(self) -> None:
         for st in self._facts:
             if st.predicate not in self.predicates:
