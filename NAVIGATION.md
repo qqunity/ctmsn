@@ -26,7 +26,7 @@
 `docs/THEORY.md` → `docs/VERIFICATION.md` → исходный код `src/ctmsn/` → `docs/deep-research-report-asp.md`
 
 ### Студент
-`docs/LAB1_UNIVERSITY_INSTRUCTION.md` → `LAB2_SCENARIOS_INSTRUCTION.md` → `LAB3_FORMULAS_INSTRUCTION.md` → `LAB4_FORCING_INSTRUCTION.md`
+`docs/LAB1_UNIVERSITY_INSTRUCTION.md` → `LAB2_SCENARIOS_INSTRUCTION.md` → `LAB3_FORMULAS_INSTRUCTION.md` → `LAB4_FORCING_INSTRUCTION.md` → `LAB5_INHERITANCE_INSTRUCTION.md` → `LAB6_WORKFLOW_INSTRUCTION.md`
 
 ### UI/API разработка
 `README.md` → `UI_IMPLEMENTATION.md` → `apps/api/README.md` + `apps/web/README.md` → `tests/e2e_*.py`
@@ -88,6 +88,8 @@ README.md
 | [docs/LAB2_SCENARIOS_INSTRUCTION.md](docs/LAB2_SCENARIOS_INSTRUCTION.md) | ЛР 2: Анализ сценариев |
 | [docs/LAB3_FORMULAS_INSTRUCTION.md](docs/LAB3_FORMULAS_INSTRUCTION.md) | ЛР 3: Формулы и трёхзначная логика |
 | [docs/LAB4_FORCING_INSTRUCTION.md](docs/LAB4_FORCING_INSTRUCTION.md) | ЛР 4: Параметризация, условия, форсинг |
+| [docs/LAB5_INHERITANCE_INSTRUCTION.md](docs/LAB5_INHERITANCE_INSTRUCTION.md) | ЛР 5: Наследование и исключения |
+| [docs/LAB6_WORKFLOW_INSTRUCTION.md](docs/LAB6_WORKFLOW_INSTRUCTION.md) | ЛР 6: Переходы, верификация, метрики |
 | [DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md) | Сводка и покрытие |
 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | История изменений документации |
 

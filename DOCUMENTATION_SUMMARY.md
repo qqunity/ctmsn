@@ -35,6 +35,8 @@
 | [docs/LAB2_SCENARIOS_INSTRUCTION.md](docs/LAB2_SCENARIOS_INSTRUCTION.md) | Анализ сценариев (композиция, уравнения) |
 | [docs/LAB3_FORMULAS_INSTRUCTION.md](docs/LAB3_FORMULAS_INSTRUCTION.md) | Формулы и трёхзначная логика |
 | [docs/LAB4_FORCING_INSTRUCTION.md](docs/LAB4_FORCING_INSTRUCTION.md) | Параметризация, условия, форсинг |
+| [docs/LAB5_INHERITANCE_INSTRUCTION.md](docs/LAB5_INHERITANCE_INSTRUCTION.md) | Наследование и исключения |
+| [docs/LAB6_WORKFLOW_INSTRUCTION.md](docs/LAB6_WORKFLOW_INSTRUCTION.md) | Переходы, верификация, метрики (сценарий doc_workflow) |
 
 ## Документы сценариев
 
@@ -84,7 +86,7 @@
 - Сравнение baseline A/B/C и статистика (Mann–Whitney, bootstrap CI)
 - Декларативный DSL моделей (JSON/YAML), round-trip
 - Формальная верификация: TLA+-спецификация и ограниченный model-checker
-- Сценарии: `fast_smith`, `time_process`, `fishing`, `spawn`, `lab1_university`, `lab3_formulas`, `lab5_inheritance`
+- Сценарии: `fast_smith`, `time_process`, `fishing`, `spawn`, `lab1_university`, `lab3_formulas`, `lab5_inheritance`, `doc_workflow`
 - Запуск и сопровождение локального UI (включая панель переходов)
 - Панель преподавателя: просмотр workspace, оценки, комментарии
 - Система баг-репортов: отправка, управление статусами

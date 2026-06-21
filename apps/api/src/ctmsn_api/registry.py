@@ -90,3 +90,12 @@ def init_registry() -> None:
         register(ScenarioSpec("lab5_inheritance", build_lab5, None, goal_lab5, conds_lab5, variables=vars_lab5))
     except Exception:
         pass
+
+    try:
+        from ctmsn.scenarios.doc_workflow.model import build_network as build_wf
+        from ctmsn.scenarios.doc_workflow.goal import build_goal as goal_wf
+        from ctmsn.scenarios.doc_workflow.constraints import build_conditions as conds_wf
+        from ctmsn.scenarios.doc_workflow.params import build_variables as vars_wf
+        register(ScenarioSpec("doc_workflow", build_wf, None, goal_wf, conds_wf, variables=vars_wf))
+    except Exception:
+        pass
